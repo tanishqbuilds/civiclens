@@ -1,0 +1,181 @@
+### ============================================
+### CivicLens API Test Collection
+### Use with VS Code REST Client extension
+### Base URL: http://localhost:3001
+### ============================================
+
+@baseUrl = http://localhost:3001
+@token = {{loginResponse.response.body.token}}
+
+
+### ─── 1. Health Check ────────────────────────
+
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+
+
+### ─── 2. Admin Login ─────────────────────────
+
+# @name loginResponse
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin@gov",
+  "password": "admin@gov"
+}
+
+###
+
+
+### ─── 3. Verify Auth Token ──────────────────
+
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{token}}
+
+###
+
+
+### ─── 4. Submit Ticket (with photoUrl) ──────
+
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+
+{
+  "description": "Large pothole near City Mall signal causing traffic slowdown.",
+  "photoUrl": "https://example.com/issues/pothole-test.jpg",
+  "longitude": 77.5946,
+  "latitude": 12.9716
+}
+
+###
+
+
+### ─── 5. Submit Ticket (multipart with photo file) ──
+
+POST {{baseUrl}}/api/tickets
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="description"
+
+Garbage overflow near community park entrance
+------FormBoundary
+Content-Disposition: form-data; name="longitude"
+
+72.8777
+------FormBoundary
+Content-Disposition: form-data; name="latitude"
+
+19.076
+------FormBoundary
+Content-Disposition: form-data; name="photo"; filename="test-image.jpg"
+Content-Type: image/jpeg
+
+< ./test-image.jpg
+------FormBoundary--
+
+###
+
+
+### ─── 6. Get All Tickets (default) ──────────
+
+GET {{baseUrl}}/api/tickets
+
+###
+
+
+### ─── 7. Get Tickets — Filtered & Sorted ────
+
+GET {{baseUrl}}/api/tickets?status=open&category=pothole&sort=severity&page=1&limit=10
+
+###
+
+
+### ─── 8. Get Tickets — Page 2 ───────────────
+
+GET {{baseUrl}}/api/tickets?page=2&limit=5
+
+###
+
+
+### ─── 9. Get Single Ticket by ID ────────────
+### Replace "1" with an actual ticket ID from the GET response
+
+GET {{baseUrl}}/api/tickets/1
+
+###
+
+
+### ─── 10. Update Ticket Status ──────────────
+### Replace "1" with an actual ticket ID
+
+PATCH {{baseUrl}}/api/tickets/1
+Content-Type: application/json
+
+{
+  "status": "in_progress"
+}
+
+###
+
+
+### ─── 11. Update Ticket to Resolved ─────────
+
+PATCH {{baseUrl}}/api/tickets/1
+Content-Type: application/json
+
+{
+  "status": "resolved"
+}
+
+###
+
+
+### ─── 12. Dashboard Stats ───────────────────
+
+GET {{baseUrl}}/api/stats
+
+###
+
+
+### ─── 13. Azure Blob Connectivity Test ──────
+
+GET {{baseUrl}}/api/test-azure
+
+###
+
+
+### ─── VALIDATION TESTS ──────────────────────
+
+### ─── 14. POST Ticket — Missing required fields (expect 400)
+
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+
+{
+  "description": "Missing photo and coords"
+}
+
+###
+
+
+### ─── 15. PATCH Ticket — Invalid status (expect 400)
+
+PATCH {{baseUrl}}/api/tickets/1
+Content-Type: application/json
+
+{
+  "status": "invalid_status"
+}
+
+###
+
+
+### ─── 16. GET Ticket — Non-existent ID (expect 404)
+
+GET {{baseUrl}}/api/tickets/nonexistent999
+
+###

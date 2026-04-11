@@ -1,0 +1,17 @@
+graph LR
+    %% The simple 5-step flow
+    Citizen["📱 Citizen App <br> (React)"] -->|"1. Report Issue"| API["⚙️ Node.js API <br> (Azure)"]
+    
+    API -->|"2. Save Photo"| Blob["☁️ Azure Blob <br> Storage"]
+    
+    API <-->|"3. Analyze Image <br> (Category & Severity)"| AI["🧠 CLIP AI Service <br> (Docker)"]
+    
+    API -->|"4. Save Ticket"| DB[("🗄️ MongoDB <br> Atlas")]
+    
+    DB -.->|"5. View Heatmap <br> & Priorities"| Admin["💻 Admin Dashboard <br> (React)"]
+    
+    %% Styling to make it pop for judges
+    style Citizen fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px
+    style Admin fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px
+    style AI fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    style API fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
