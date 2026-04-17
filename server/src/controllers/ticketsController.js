@@ -1,9 +1,10 @@
 const { getAllTickets, createTicket, updateTicketStatus, getStats } = require('../models/ticketStore');
-const { uploadBufferToBlob } = require('../utils/blobUpload');
 const { classifyImage, classifyImageFromUrl } = require('../utils/aiClassifier');
 const { broadcast } = require('../utils/wsServer');
 const TicketModel = require('../../models/Ticket');
 const mongoose = require('mongoose');
+const fs = require('fs/promises');
+const path = require('path');
 
 const ALLOWED_STATUS = ['open', 'in_progress', 'resolved'];
 const AZURE_BLOB_PREFIX = 'https://optimumhackoverflow.blob.core.windows.net/ticket-images/';
@@ -15,6 +16,23 @@ const ALLOWED_AI_CATEGORIES = new Set([
     'other',
     'unclassified',
 ]);
+
+const LOCAL_UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+
+function buildLocalPhotoFilename(originalName) {
+    const ext = path.extname(originalName || '').toLowerCase() || '.jpg';
+    const stamp = Date.now();
+    const rand = Math.random().toString(36).slice(2, 10);
+    return `ticket-${stamp}-${rand}${ext}`;
+}
+
+async function persistUploadedPhotoLocally(uploadedPhoto, req) {
+    const filename = buildLocalPhotoFilename(uploadedPhoto.originalname);
+    await fs.mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
+    const fullPath = path.join(LOCAL_UPLOADS_DIR, filename);
+    await fs.writeFile(fullPath, uploadedPhoto.buffer);
+    return `${req.protocol}://${req.get('host')}/uploads/${filename}`;
+}
 
 function normalizeTicketPhotoForDisplay(photoUrl) {
     if (!photoUrl || typeof photoUrl !== 'string') return null;
@@ -30,7 +48,23 @@ function normalizeTicketPhotoForDisplay(photoUrl) {
         return normalized.startsWith(AZURE_BLOB_PREFIX) ? stripQuery(normalized) : null;
     }
 
-    return trimmed.startsWith(AZURE_BLOB_PREFIX) ? stripQuery(trimmed) : null;
+    if (trimmed.startsWith(AZURE_BLOB_PREFIX)) {
+        return stripQuery(trimmed);
+    }
+
+    if (trimmed.startsWith('/uploads/')) {
+        return stripQuery(trimmed);
+    }
+
+    if (/^https?:\/\/[^/]+\/uploads\//i.test(trimmed)) {
+        return stripQuery(trimmed);
+    }
+
+    if (/^data:image\//i.test(trimmed)) {
+        return trimmed;
+    }
+
+    return /^https?:\/\//i.test(trimmed) ? stripQuery(trimmed) : null;
 }
 
 function withDisplayPhoto(ticket) {
@@ -108,12 +142,23 @@ function applyGeoFilter(tickets, query) {
     return result;
 }
 
-function getTickets(req, res) {
+async function getTickets(req, res) {
     const { status, category, sort } = req.query;
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
 
-    let tickets = [...getAllTickets()];
+    let tickets = [];
+
+    if (mongoose.connection.readyState === 1) {
+        try {
+            tickets = await TicketModel.find().lean();
+        } catch (err) {
+            console.error('MongoDB ticket query failed, falling back to memory:', err.message);
+            tickets = [...getAllTickets()];
+        }
+    } else {
+        tickets = [...getAllTickets()];
+    }
 
     // Geo filter (bounding box and/or radius)
     tickets = applyGeoFilter(tickets, req.query);
@@ -190,29 +235,18 @@ async function postTicket(req, res) {
         });
     }
 
-    // ── 2. Upload image to Azure Blob Storage ─────────────────────
+    // ── 2. Persist uploaded image locally (Azure is intentionally skipped) ──
     let photoUrl = req.body.photoUrl || null;
-    let blobUrl = null;
     if (uploadedPhoto) {
         try {
-            const uploadResult = await uploadBufferToBlob({
-                buffer: uploadedPhoto.buffer,
-                originalName: uploadedPhoto.originalname,
-                mimeType: uploadedPhoto.mimetype,
+            photoUrl = await persistUploadedPhotoLocally(uploadedPhoto, req);
+        } catch (saveErr) {
+            console.error('Local image save failed:', saveErr.message);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to save uploaded image.',
             });
-            blobUrl = uploadResult.blobUrl;
-            photoUrl = blobUrl;
-        } catch (azureErr) {
-            console.warn('⚠️  Azure upload failed:', azureErr.message);
-            photoUrl = req.body.photoUrl || null;
         }
-    }
-
-    if (!photoUrl) {
-        return res.status(502).json({
-            success: false,
-            error: 'Image upload failed. Could not obtain a valid image URL.',
-        });
     }
 
     // ── 3. AI classification (with fallback) ──────────────────────
@@ -251,11 +285,7 @@ async function postTicket(req, res) {
     let mongoId = null;
     if (mongoose.connection.readyState === 1) {
         try {
-            if (blobUrl) {
-                console.log('Saving ticket image URL:', blobUrl);
-            } else {
-                console.log('Saving ticket image URL:', photoUrl);
-            }
+            console.log('Saving ticket image URL:', photoUrl);
             const doc = await TicketModel.create({
                 description: description || '',
                 photoUrl,
@@ -335,15 +365,16 @@ async function patchTicketStatus(req, res) {
 async function getTicketById(req, res) {
     const { id } = req.params;
 
-    // Try MongoDB first
+    // Use MongoDB as source of truth when connected
     if (mongoose.connection.readyState === 1) {
         try {
             const doc = await TicketModel.findById(id).lean();
             if (doc) {
                 return res.status(200).json({ success: true, data: withDisplayPhoto(doc) });
             }
+            return res.status(404).json({ success: false, error: 'Ticket not found.' });
         } catch {
-            // fall through to in-memory
+            return res.status(404).json({ success: false, error: 'Ticket not found.' });
         }
     }
 
