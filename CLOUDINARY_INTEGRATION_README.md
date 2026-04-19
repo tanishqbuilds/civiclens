@@ -49,4 +49,4 @@ sequenceDiagram
     Backend-->>Frontend: 7. Success! Show ticket to citizen
 ```
 
-> Backend processes the image upload to Cloudinary and the AI analysis at the same time straight from its internal memory, making it lightning-fast and keeping your hard drive clear!
+> Backend processes the image upload to Cloudinary and the AI analysis at the same time straight from its internal memory, making it lightning-fast and keeping hard drive clear!
