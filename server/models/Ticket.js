@@ -54,7 +54,6 @@ const ticketSchema = new mongoose.Schema(
             default: 5,
         },
 
-<<<<<<< HEAD
         // --- Reporter (optional — anonymous submissions have no reporter) ---
         reportedBy: {
             type: mongoose.Schema.Types.ObjectId,
@@ -62,8 +61,6 @@ const ticketSchema = new mongoose.Schema(
             default: null,
         },
 
-=======
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
         // --- Workflow ---
         status: {
             type: String,

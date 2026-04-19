@@ -1,14 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-<<<<<<< HEAD
 import API, { API_BASE, userLogin as apiUserLogin, userSignup as apiUserSignup, getUserProfile } from '../services/api';
-=======
-import API, { API_BASE } from '../services/api';
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-<<<<<<< HEAD
     // Admin state (existing officer/admin dashboard auth)
     const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -18,12 +13,6 @@ export function AuthProvider({ children }) {
     const [userLoading, setUserLoading] = useState(true);
 
     // Check for existing admin token on mount
-=======
-    const [admin, setAdmin] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    // Check for existing token on mount
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
     useEffect(() => {
         const token = localStorage.getItem('admin_token');
         if (!token) {
@@ -42,7 +31,6 @@ export function AuthProvider({ children }) {
             .finally(() => setLoading(false));
     }, []);
 
-<<<<<<< HEAD
     // Check for existing user token on mount
     useEffect(() => {
         const token = localStorage.getItem('user_token');
@@ -61,8 +49,6 @@ export function AuthProvider({ children }) {
     }, []);
 
     // Admin login (existing)
-=======
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
     const login = useCallback(async (username, password) => {
         const doLogin = () => API.post('/auth/login', { username, password }, { timeout: 20000 });
         const doLoginFetchFallback = async () => {
@@ -118,7 +104,6 @@ export function AuthProvider({ children }) {
         setAdmin(null);
     }, []);
 
-<<<<<<< HEAD
     // User signup (citizen / officer)
     const userSignup = useCallback(async (signupData) => {
         const { data } = await apiUserSignup(signupData);
@@ -148,10 +133,6 @@ export function AuthProvider({ children }) {
             // User (citizen / officer)
             user, userLoading, userSignup, userLogin: userLoginFn, userLogout, isUserAuthenticated: !!user,
         }}>
-=======
-    return (
-        <AuthContext.Provider value={{ admin, loading, login, logout, isAuthenticated: !!admin }}>
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
             {children}
         </AuthContext.Provider>
     );

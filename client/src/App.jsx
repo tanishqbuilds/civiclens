@@ -1,15 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
-<<<<<<< HEAD
 import LandingPage from './pages/LandingPage';
 import CitizenReportPage from './pages/CitizenReportPage';
 import AuthPage from './pages/AuthPage';
 import TrackPromptPage from './pages/TrackPromptPage';
 import CitizenDashboard from './pages/CitizenDashboard';
-=======
-import CitizenReportPage from './pages/CitizenReportPage';
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -20,7 +16,6 @@ function App() {
             <AuthProvider>
                 <Toaster position="top-center" toastOptions={{ duration: 3500 }} />
                 <Routes>
-<<<<<<< HEAD
                     {/* Public */}
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/report" element={<CitizenReportPage />} />
@@ -29,9 +24,6 @@ function App() {
                     <Route path="/dashboard" element={<CitizenDashboard />} />
 
                     {/* Admin */}
-=======
-                    <Route path="/" element={<CitizenReportPage />} />
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                     <Route path="/admin/login" element={<AdminLogin />} />
                     <Route
                         path="/admin"
@@ -41,11 +33,8 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-<<<<<<< HEAD
 
                     {/* Fallback */}
-=======
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </AuthProvider>

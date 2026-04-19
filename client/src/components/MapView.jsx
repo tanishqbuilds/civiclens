@@ -59,13 +59,9 @@ function MapView({
         }
 
         map.on('click', (e) => {
-<<<<<<< HEAD
             if (typeof onMapClickRef.current === 'function') {
                 onMapClickRef.current({ lng: e.lngLat.lng, lat: e.lngLat.lat });
             }
-=======
-            onMapClickRef.current?.({ lng: e.lngLat.lng, lat: e.lngLat.lat });
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
         });
 
         const fireBounds = () => {

@@ -297,6 +297,7 @@ async function postTicket(req, res) {
                 aiConfidence,
                 severityScore,
                 status: 'open',
+                reportedBy: req.user ? (req.user.id || req.user._id) : null,
             });
             mongoId = doc._id;
         } catch (dbErr) {
@@ -318,6 +319,7 @@ async function postTicket(req, res) {
         aiConfidence,
         severityScore,
         mongoId,
+        reportedBy: req.user ? (req.user.id || req.user._id) : null,
     });
 
     // ── 6. Push real-time update to all admin dashboard clients ──
@@ -445,15 +447,97 @@ async function getDashboardStats(req, res) {
     });
 }
 
+async function getMyTickets(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const userId = req.user.id || req.user._id;
+
+    const { status, category, sort } = req.query;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+
+    let tickets = [];
+
+    if (mongoose.connection.readyState === 1) {
+        try {
+            const query = { reportedBy: userId };
+            if (status) query.status = status;
+            if (category) query.aiCategory = category;
+
+            const sortableFields = new Set(['severityScore', 'createdAt']);
+            let sortField = 'createdAt';
+            let sortDesc = true;
+            if (sort) {
+                const desc = sort.startsWith('-');
+                const raw = desc ? sort.slice(1) : sort;
+                const sortMap = { severity: 'severityScore' };
+                const mapped = sortMap[raw] || raw;
+                if (sortableFields.has(mapped)) {
+                    sortField = mapped;
+                    sortDesc = desc;
+                }
+            }
+
+            const sortObj = {};
+            sortObj[sortField] = sortDesc ? -1 : 1;
+
+            tickets = await TicketModel.find(query).sort(sortObj).lean();
+        } catch (err) {
+            console.error('MongoDB getMyTickets query failed:', err.message);
+        }
+    } else {
+        const filtered = applyGeoFilter([...getAllTickets()], req.query);
+        tickets = filtered.filter(t => String(t.reportedBy) === String(userId));
+        if (status) {
+            tickets = tickets.filter(t => t.status === status);
+        }
+        if (category) {
+            tickets = tickets.filter(t => t.aiCategory === category);
+        }
+        
+        const sortableFields = new Set(['severityScore', 'createdAt']);
+        let sortField = 'createdAt';
+        let sortDesc = true;
+        if (sort) {
+            const desc = sort.startsWith('-');
+            const raw = desc ? sort.slice(1) : sort;
+            const sortMap = { severity: 'severityScore' };
+            const mapped = sortMap[raw] || raw;
+            if (sortableFields.has(mapped)) {
+                sortField = mapped;
+                sortDesc = desc;
+            }
+        }
+        tickets.sort((a, b) => {
+            let cmp;
+            if (sortField === 'createdAt') {
+                cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            } else {
+                cmp = (a[sortField] ?? 0) - (b[sortField] ?? 0);
+            }
+            return sortDesc ? -cmp : cmp;
+        });
+    }
+
+    const total = tickets.length;
+    const start = (page - 1) * limit;
+    const paginated = tickets.slice(start, start + limit).map(withDisplayPhoto);
+
+    return res.status(200).json({
+        success: true,
+        count: paginated.length,
+        total,
+        page,
+        data: paginated,
+    });
+}
+
 module.exports = {
     getTickets,
     postTicket,
     patchTicketStatus,
     getTicketById,
     getDashboardStats,
-<<<<<<< HEAD
+    getMyTickets,
 };
-=======
-};
-
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38

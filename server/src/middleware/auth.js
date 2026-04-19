@@ -2,12 +2,9 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'civiclens-fallback-secret';
 
-<<<<<<< HEAD
 /**
  * Verify admin JWT token (used for admin dashboard routes)
  */
-=======
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 function verifyToken(req, res, next) {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
@@ -24,7 +21,6 @@ function verifyToken(req, res, next) {
     }
 }
 
-<<<<<<< HEAD
 /**
  * Verify user JWT token (used for citizen/officer routes)
  */
@@ -65,6 +61,3 @@ function optionalUserToken(req, res, next) {
 }
 
 module.exports = { verifyToken, verifyUserToken, optionalUserToken };
-=======
-module.exports = { verifyToken };
->>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
