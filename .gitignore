@@ -1,0 +1,69 @@
+# =========================
+# Node.js (server + client)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# React build output
+# =========================
+client/dist/
+client/build/
+
+# =========================
+# Python (ai-service)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ai-service/models/weights/*.pt
+ai-service/models/weights/*.pth
+ai-service/models/weights/*.h5
+ai-service/models/weights/*.tflite
+ai-service/uploads/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.local
+.env.production
+
+# =========================
+# IDE & OS
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# =========================
+# Azure
+# =========================
+*.zip
+.codersinflow
+.vscode
+node_modules
+.venv
+.codex
+out
+dist
+*.vsix
+.claude
+CLAUDE.md
+.git
+*.log
+*.tmp
+__pycache__
+*.pyc
+.next
+.github
