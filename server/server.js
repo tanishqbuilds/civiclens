@@ -6,7 +6,10 @@ const http = require('http');
 
 const ticketRoutes = require('./src/routes/ticketsRoutes');
 const authRoutes = require('./src/routes/authRoutes');
+<<<<<<< HEAD
 const userAuthRoutes = require('./src/routes/userAuthRoutes');
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 const azureTestRoutes = require('./src/routes/azureTestRoutes');
 const { seedAdmin } = require('./src/models/adminStore');
 const { loadFromMongo } = require('./src/models/ticketStore');
@@ -21,7 +24,11 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 // ========================
 app.use(
     cors({
+<<<<<<< HEAD
         origin: [CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:5174'],
+=======
+        origin: [CLIENT_ORIGIN, 'http://localhost:3000'],
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
     })
 );
 app.use(express.json());
@@ -32,7 +39,10 @@ app.use(express.urlencoded({ extended: true }));
 // ========================
 app.use('/api', ticketRoutes);
 app.use('/api/auth', authRoutes);
+<<<<<<< HEAD
 app.use('/api/users', userAuthRoutes);
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 app.use('/api', azureTestRoutes);
 
 app.get('/health', (req, res) => {

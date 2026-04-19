@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /**
+=======
+﻿/**
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
  * CitizenReportPage — Liquid Glass Design
  *
  * Features:
@@ -11,8 +15,12 @@
  * ✅ Responsive — designed thumb-friendly at 375 px
  */
 import { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+=======
+import { Link } from 'react-router-dom';
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 import toast from 'react-hot-toast';
 import { debugLog } from '../utils/debug';
 
@@ -51,8 +59,11 @@ function Icon({ name, className = '' }) {
 }
 
 function CitizenReportPage() {
+<<<<<<< HEAD
     const navigate = useNavigate();
     const { isUserAuthenticated } = useAuth();
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
     const [photo, setPhoto] = useState(null);
     const [preview, setPreview] = useState(null);
     const [description, setDescription] = useState('');
@@ -168,13 +179,21 @@ function CitizenReportPage() {
             },
             () => {
                 setLocating(false);
+<<<<<<< HEAD
                 toast.error('Could not get location. Please ensure GPS is enabled and try again.');
+=======
+                toast.error('Could not get location. Tap the map to pin manually.');
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
             },
             { timeout: 10000, maximumAge: 5000 },
         );
     };
 
+<<<<<<< HEAD
     // const handleMapClick = ({ lng, lat }) => setCoords({ lng, lat }); // Disabled as per requirement
+=======
+    const handleMapClick = ({ lng, lat }) => setCoords({ lng, lat });
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -189,21 +208,33 @@ function CitizenReportPage() {
 
         setSubmitting(true);
         try {
+<<<<<<< HEAD
             const res = await submitTicket(fd);
             const ticketId = res.data?.data?._id || res.data?.data?.id;
             // Start morph animation then redirect to track prompt
             setMorphState('morphing');
             setTimeout(() => setMorphState('success'), 650);
+=======
+            await submitTicket(fd);
+            // Start morph animation
+            setMorphState('morphing');
+            setTimeout(() => setMorphState('success'), 650);
+            // Reset after animation plays
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
             setTimeout(() => {
                 setMorphState('idle');
                 clearPhoto();
                 setDescription('');
                 setCoords(null);
+<<<<<<< HEAD
                 // Redirect to track prompt page with the new ticket ID
                 if (ticketId) {
                     navigate(`/track?ticketId=${ticketId}`);
                 }
             }, 2200);
+=======
+            }, 3200);
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
         } catch (err) {
             const msg =
                 err.code === 'ECONNABORTED'
@@ -238,6 +269,7 @@ function CitizenReportPage() {
                         </div>
                         <span className="text-base font-black tracking-tight text-slate-900">CivicLens</span>
                     </div>
+<<<<<<< HEAD
                     {/* Action Links — top right */}
                     <div className="flex items-center gap-2">
                         {isUserAuthenticated && (
@@ -257,6 +289,16 @@ function CitizenReportPage() {
                             Admin
                         </Link>
                     </div>
+=======
+                    {/* Admin — top right */}
+                    <Link
+                        to="/admin/login"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">shield_person</span>
+                        Admin
+                    </Link>
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                 </div>
             </header>
 
@@ -398,7 +440,11 @@ function CitizenReportPage() {
                             center={coords ? [coords.lng, coords.lat] : [78.9629, 20.5937]}
                             zoom={coords ? 14 : 4}
                             markers={mapMarkers}
+<<<<<<< HEAD
                             onMapClick={null} // Explicitly disabled
+=======
+                            onMapClick={handleMapClick}
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                             interactive
                         />
                         {/* Location indicator overlay */}
@@ -416,8 +462,13 @@ function CitizenReportPage() {
                                 <Icon name="map" className="text-sm text-primary" />
                                 <span className="truncate">
                                     {coords
+<<<<<<< HEAD
                                         ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} — 📍 [GPS FIXED]`
                                         : 'Auto-detect GPS to pin location'}
+=======
+                                        ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} — tap map to reposition`
+                                        : 'Tap the map or use GPS to pin location'}
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                                 </span>
                             </div>
                         </div>
@@ -439,7 +490,11 @@ function CitizenReportPage() {
                     </button>
                     {(!photo || !coords) && (
                         <p className="text-center text-xs text-slate-400 mt-3">
+<<<<<<< HEAD
                             {!photo && !coords ? 'Add a photo and detect your location to continue' : !photo ? 'Add a photo to continue' : 'Auto-detect your location to continue'}
+=======
+                            {!photo && !coords ? 'Add a photo and pin your location to continue' : !photo ? 'Add a photo to continue' : 'Pin your location to continue'}
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
                         </p>
                     )}
                 </section>

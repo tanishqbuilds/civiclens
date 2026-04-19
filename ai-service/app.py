@@ -70,6 +70,7 @@ def classify_image():
         "severity": severity_score
     })
 
+<<<<<<< HEAD
 
 # ═════════════════════════════════════════════════════════════
 # Neuro-Fuzzy Reputation Scoring — Optional Post-Processing
@@ -212,6 +213,8 @@ def update_user_reputation(user_id: str, mongo_uri: str = None) -> dict:
         }
 
 
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 if __name__ == '__main__':
     # Using 0.0.0.0 makes the server accessible on your local network
     # Change port to 5005 to avoid common conflicts with Windows AirPlay/Services

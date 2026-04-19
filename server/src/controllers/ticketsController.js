@@ -451,4 +451,9 @@ module.exports = {
     patchTicketStatus,
     getTicketById,
     getDashboardStats,
+<<<<<<< HEAD
 };
+=======
+};
+
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38

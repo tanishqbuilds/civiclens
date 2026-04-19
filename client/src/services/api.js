@@ -66,6 +66,7 @@ export const updateTicketStatus = (id, status) =>
  */
 export const getStats = () => API.get('/stats');
 
+<<<<<<< HEAD
 // =========================================
 // User Authentication (Citizen / Officer)
 // =========================================
@@ -120,4 +121,6 @@ export const getMyReputation = () => {
     });
 };
 
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
 export default API;

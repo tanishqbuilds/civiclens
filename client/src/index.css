@@ -221,6 +221,7 @@ body {
   filter: blur(6px);
   pointer-events: none;
 }
+<<<<<<< HEAD
 
 /* ── Landing Page Animations ── */
 @keyframes landing-fade-up {
@@ -247,3 +248,5 @@ body {
   animation: bounce-slow 2s ease-in-out infinite;
 }
 
+=======
+>>>>>>> b73c570ef66a6690a06603b99a0c60b0312bcd38
