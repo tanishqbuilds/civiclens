@@ -5,6 +5,7 @@ const TicketModel = require('../../models/Ticket');
 const mongoose = require('mongoose');
 const fs = require('fs/promises');
 const path = require('path');
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 const ALLOWED_STATUS = ['open', 'in_progress', 'resolved'];
 const AZURE_BLOB_PREFIX = 'https://optimumhackoverflow.blob.core.windows.net/ticket-images/';
@@ -17,22 +18,8 @@ const ALLOWED_AI_CATEGORIES = new Set([
     'unclassified',
 ]);
 
-const LOCAL_UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+// Local persistence logic replaced by Cloudinary 
 
-function buildLocalPhotoFilename(originalName) {
-    const ext = path.extname(originalName || '').toLowerCase() || '.jpg';
-    const stamp = Date.now();
-    const rand = Math.random().toString(36).slice(2, 10);
-    return `ticket-${stamp}-${rand}${ext}`;
-}
-
-async function persistUploadedPhotoLocally(uploadedPhoto, req) {
-    const filename = buildLocalPhotoFilename(uploadedPhoto.originalname);
-    await fs.mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
-    const fullPath = path.join(LOCAL_UPLOADS_DIR, filename);
-    await fs.writeFile(fullPath, uploadedPhoto.buffer);
-    return `${req.protocol}://${req.get('host')}/uploads/${filename}`;
-}
 
 function normalizeTicketPhotoForDisplay(photoUrl) {
     if (!photoUrl || typeof photoUrl !== 'string') return null;
@@ -235,16 +222,16 @@ async function postTicket(req, res) {
         });
     }
 
-    // ── 2. Persist uploaded image locally (Azure is intentionally skipped) ──
+    // ── 2. Upload image to Cloudinary ──
     let photoUrl = req.body.photoUrl || null;
     if (uploadedPhoto) {
         try {
-            photoUrl = await persistUploadedPhotoLocally(uploadedPhoto, req);
+            photoUrl = await uploadToCloudinary(uploadedPhoto.buffer, 'civiclens/tickets');
         } catch (saveErr) {
-            console.error('Local image save failed:', saveErr.message);
+            console.error('Cloudinary image upload failed:', saveErr.message);
             return res.status(500).json({
                 success: false,
-                error: 'Failed to save uploaded image.',
+                error: 'Failed to upload image to Cloudinary.',
             });
         }
     }
