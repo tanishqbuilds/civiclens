@@ -113,7 +113,7 @@ export default function CitizenDashboard() {
             {/* Header */}
             <header className="relative z-40 w-full glass border-b border-white/40 sticky top-0">
                 <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-2">
+                    <Link to="/dashboard" className="flex items-center gap-2">
                         <div className="bg-primary text-white rounded-lg w-7 h-7 flex items-center justify-center shadow-md shadow-primary/30">
                             <Icon name="location_city" className="text-[16px]" />
                         </div>
@@ -121,12 +121,6 @@ export default function CitizenDashboard() {
                     </Link>
 
                     <div className="flex items-center gap-3">
-                        <Link 
-                            to="/report"
-                            className="text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all"
-                        >
-                            Report New
-                        </Link>
                         <button 
                             onClick={handleLogout}
                             className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors"
@@ -141,10 +135,19 @@ export default function CitizenDashboard() {
                 {/* Profile Section */}
                 <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                            My Dashboard
-                        </h1>
-                        <p className="text-sm text-slate-500">Welcome back, {user?.name}</p>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                                My Dashboard
+                            </h1>
+                            <Link 
+                                to="/report"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            >
+                                <Icon name="add" className="text-[18px]" />
+                                Report Issue
+                            </Link>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-1">Welcome back, {user?.name}</p>
                     </div>
                     
                     <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md border border-white p-2 rounded-2xl shadow-sm">

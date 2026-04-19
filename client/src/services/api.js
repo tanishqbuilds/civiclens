@@ -91,6 +91,13 @@ export const getUserProfile = () => {
 };
 
 /**
+ * Get all users (admin only)
+ */
+export const getAllUsers = () => {
+    return API.get('/users');
+};
+
+/**
  * Link an anonymous ticket to the logged-in user
  */
 export const linkTicketToUser = (ticketId) => {

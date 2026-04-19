@@ -7,6 +7,7 @@ import AuthPage from './pages/AuthPage';
 import TrackPromptPage from './pages/TrackPromptPage';
 import CitizenDashboard from './pages/CitizenDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import OfficerDashboard from './pages/OfficerDashboard';
 import AdminLogin from './pages/AdminLogin';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -28,8 +29,18 @@ function App() {
                     <Route
                         path="/admin"
                         element={
-                            <ProtectedRoute>
+                            <ProtectedRoute type="admin">
                                 <AdminDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    
+                    {/* Officer */}
+                    <Route
+                        path="/officer"
+                        element={
+                            <ProtectedRoute type="user" allowedRole="officer">
+                                <OfficerDashboard />
                             </ProtectedRoute>
                         }
                     />

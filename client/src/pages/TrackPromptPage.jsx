@@ -35,13 +35,19 @@ export default function TrackPromptPage() {
                 .then(() => {
                     setLinked(true);
                     toast.success('Ticket linked to your account!');
+                    setTimeout(() => {
+                        navigate('/dashboard', { replace: true });
+                    }, 500);
                 })
                 .catch(() => {
                     // Might already be linked or ticket not found — non-critical
+                    setTimeout(() => {
+                        navigate('/dashboard', { replace: true });
+                    }, 500);
                 })
                 .finally(() => setLinking(false));
         }
-    }, [isUserAuthenticated, ticketId, linked]);
+    }, [isUserAuthenticated, ticketId, linked, navigate]);
 
     // Fetch ticket details for display
     useEffect(() => {
@@ -189,7 +195,7 @@ export default function TrackPromptPage() {
                             Report Another Issue
                         </button>
                         <Link
-                            to="/"
+                            to={isUserAuthenticated ? "/dashboard" : "/"}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-slate-300 bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-all"
                         >
                             <Icon name="home" className="text-lg" />

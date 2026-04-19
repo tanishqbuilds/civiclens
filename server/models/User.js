@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
             center: { type: [Number], default: undefined },
             radiusKm: { type: Number, default: 30 },
         },
+        idProofUrl: {
+            type: String,
+            default: '',
+        },
         avatar: {
             type: String,
             default: '',

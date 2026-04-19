@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import MapView, { severityColor } from "../components/MapView";
-import { getTickets, updateTicketStatus, getStats } from "../services/api";
+import { getTickets, updateTicketStatus, getStats, getAllUsers } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { debugLog } from "../utils/debug";
 
@@ -114,6 +114,9 @@ function AdminDashboard() {
     category: "",
     sort: "-severityScore",
   });
+  const [activeTab, setActiveTab] = useState('tickets');
+  const [users, setUsers] = useState([]);
+  const [userFilters, setUserFilters] = useState({ role: '', city: '' });
   const [bounds, setBounds] = useState(null);
   const [showResolved, setShowResolved] = useState(false);
   const debounceRef = useRef(null);
@@ -157,6 +160,14 @@ function AdminDashboard() {
       const ticketsRes = await getTickets(params);
       const data = ticketsRes.data?.data ?? [];
       setTickets(data);
+      
+      try {
+        const usRes = await getAllUsers();
+        setUsers(usRes.data.data || []);
+      } catch (err) {
+        debugLog('fetchAllUsers:error', err?.message);
+      }
+
       // Fetch real stats from server (not affected by pagination)
       try {
         const statsRes = await getStats();
@@ -367,6 +378,14 @@ function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto w-full px-6 pb-12 space-y-6">
+        {/* ── Tabs ── */}
+        <div className="flex gap-6 border-b border-slate-200">
+           <button onClick={() => setActiveTab('tickets')} className={`pb-3 font-bold text-sm transition-colors ${activeTab === 'tickets' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}>Tickets Dashboard</button>
+           <button onClick={() => setActiveTab('users')} className={`pb-3 font-bold text-sm transition-colors ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}>User Management</button>
+        </div>
+
+        {activeTab === 'tickets' && (
+          <div className="space-y-6">
         {/* ── Metrics Row ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
@@ -634,6 +653,76 @@ function AdminDashboard() {
             </div>
           </div>
         </div>
+        </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="liquid-glass rounded-xl overflow-hidden shadow-sm flex flex-col h-[700px]">
+             <div className="p-4 border-b border-slate-200/50 flex flex-wrap gap-4 items-center justify-between bg-white/10">
+                <div className="flex gap-3 flex-wrap">
+                   <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium">
+                     <Icon name="filter_list" className="text-sm" />
+                     Filter Users
+                   </div>
+                   <FilterSelect value={userFilters.role} onChange={(v) => setUserFilters((f) => ({ ...f, role: v }))}>
+                      <option value="">All Roles</option>
+                      <option value="citizen">Citizen</option>
+                      <option value="officer">Officer</option>
+                   </FilterSelect>
+                   <FilterSelect value={userFilters.city} onChange={(v) => setUserFilters((f) => ({ ...f, city: v }))}>
+                      <option value="">All Cities</option>
+                      <option value="Mumbai">Mumbai</option>
+                      <option value="Navi Mumbai">Navi Mumbai</option>
+                      <option value="Panvel">Panvel</option>
+                      <option value="Vashi">Vashi</option>
+                      <option value="Wadala">Wadala</option>
+                      <option value="Chunabhatti">Chunabhatti</option>
+                      <option value="Thane">Thane</option>
+                      <option value="Kalyan">Kalyan</option>
+                   </FilterSelect>
+                </div>
+             </div>
+             <div className="overflow-x-auto flex-1">
+                <table className="w-full text-left">
+                    <thead className="bg-slate-50/50 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4">Name</th>
+                        <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4">City</th>
+                        <th className="px-6 py-4">Contact</th>
+                        <th className="px-6 py-4">ID Proof</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {users
+                         .filter((u) => (userFilters.role ? u.role === userFilters.role : true) && (userFilters.city ? (u.jurisdiction?.city === userFilters.city) : true))
+                         .map((u) => (
+                        <tr key={u._id} className="hover:bg-primary/5 transition-colors group">
+                          <td className="px-6 py-4 font-semibold text-sm">
+                            {u.name}
+                            <div className="text-xs text-slate-500 font-normal">{u.email}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'officer' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700'}`}>
+                               {(u.role || 'citizen').toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium">{u.jurisdiction?.city || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-500">{u.phone || '-'}</td>
+                          <td className="px-6 py-4">
+                            {u.idProofUrl ? (
+                               <a href={u.idProofUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1 font-semibold">
+                                 <Icon name="visibility" className="text-[14px]" /> View ID
+                               </a>
+                            ) : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                </table>
+             </div>
+          </div>
+        )}
       </main>
 
       {/* ── Ticket Detail Modal ── */}

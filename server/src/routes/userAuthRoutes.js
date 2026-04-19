@@ -1,11 +1,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 const User = require('../../models/User');
 const { verifyUserToken } = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'civiclens-fallback-secret';
 const TOKEN_EXPIRY = '7d';
+
+// Multer setup for ID Proofs
+const upload = multer({ dest: path.join(__dirname, '../../uploads/') });
 
 /**
  * Generate JWT for a user
@@ -22,8 +28,8 @@ function generateToken(user) {
  * POST /api/users/signup
  * Register a new citizen or officer
  */
-router.post('/signup', async (req, res) => {
-    const { name, email, password, role, phone, department } = req.body;
+router.post('/signup', upload.single('idProof'), async (req, res) => {
+    const { name, email, password, role, phone, department, city } = req.body;
 
     if (!name || !email || !password) {
         return res.status(400).json({ success: false, error: 'Name, email, and password are required.' });
@@ -46,6 +52,8 @@ router.post('/signup', async (req, res) => {
             role: userRole,
             phone: phone || '',
             department: userRole === 'officer' ? (department || '') : '',
+            jurisdiction: userRole === 'officer' ? { city: city || '' } : undefined,
+            idProofUrl: req.file && userRole === 'officer' ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : '',
         });
 
         const token = generateToken(user);
@@ -195,6 +203,19 @@ router.get('/reputation', verifyUserToken, async (req, res) => {
             metrics: null,
             error: 'Reputation service unavailable',
         });
+    }
+});
+
+/**
+ * GET /api/users
+ * Get all users for Admin Dashboard
+ */
+router.get('/', async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.json({ success: true, data: users });
+    } catch (err) {
+        res.status(500).json({ success: false, error: 'Server error' });
     }
 });
 

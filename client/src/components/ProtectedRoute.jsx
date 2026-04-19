@@ -1,10 +1,12 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ children }) {
-    const { isAuthenticated, loading } = useAuth();
+export default function ProtectedRoute({ children, type = "admin", allowedRole }) {
+    const { isAuthenticated, loading, isUserAuthenticated, userLoading, user } = useAuth();
 
-    if (loading) {
+    const isLoading = type === 'admin' ? loading : userLoading;
+
+    if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f6f6f8]">
                 <div className="liquid-glass rounded-2xl px-10 py-8 flex flex-col items-center gap-4">
@@ -15,5 +17,15 @@ export default function ProtectedRoute({ children }) {
         );
     }
 
-    return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+    if (type === 'admin') {
+        return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+    }
+
+    if (type === 'user') {
+        if (!isUserAuthenticated) return <Navigate to="/auth?mode=login" replace />;
+        if (allowedRole && user?.role !== allowedRole) return <Navigate to="/dashboard" replace />;
+        return children;
+    }
+
+    return <Navigate to="/" replace />;
 }

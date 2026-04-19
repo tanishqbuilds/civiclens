@@ -56,6 +56,7 @@ function CitizenReportPage() {
     const [photo, setPhoto] = useState(null);
     const [preview, setPreview] = useState(null);
     const [description, setDescription] = useState('');
+    const [city, setCity] = useState('');
     const [coords, setCoords] = useState(null);
     const [locating, setLocating] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -178,12 +179,14 @@ function CitizenReportPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!photo) return toast.error('Please select a photo first.');
-        if (!coords) return toast.error('Please set your location.');
+        if (!photo)   return toast.error('Please select a photo first.');
+        if (!city)    return toast.error('Please select a city.');
+        if (!coords)  return toast.error('Please set your location.');
 
         const fd = new FormData();
         fd.append('photo', photo);
         fd.append('description', description.trim());
+        fd.append('city', city);
         fd.append('longitude', String(coords.lng));
         fd.append('latitude', String(coords.lat));
 
@@ -423,22 +426,46 @@ function CitizenReportPage() {
                     </div>
                 </section>
 
-
+                {/* City Selection */}
+                <section className="bg-white/60 backdrop-blur-sm border border-white/80 shadow-sm rounded-2xl p-4 space-y-3">
+                    <label className="block text-sm font-semibold text-slate-600">
+                        City *
+                    </label>
+                    <div className="relative">
+                        <Icon name="location_city" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                        <select
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all appearance-none bg-white/50"
+                        >
+                            <option value="">Select City</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Navi Mumbai">Navi Mumbai</option>
+                            <option value="Panvel">Panvel</option>
+                            <option value="Vashi">Vashi</option>
+                            <option value="Wadala">Wadala</option>
+                            <option value="Chunabhatti">Chunabhatti</option>
+                            <option value="Thane">Thane</option>
+                            <option value="Kalyan">Kalyan</option>
+                        </select>
+                        <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                    </div>
+                </section>
 
                 {/* Submit Button */}
                 <section className="pt-4 pb-16">
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={submitting || !photo || !coords}
+                        disabled={submitting || !photo || !coords || !city}
                         className="w-full bg-primary text-white font-bold py-5 rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center gap-2 text-base hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         <span>{submitting ? 'Submitting…' : 'Submit Report'}</span>
                         <Icon name={submitting ? 'hourglass_empty' : 'send'} />
                     </button>
-                    {(!photo || !coords) && (
+                    {(!photo || !coords || !city) && (
                         <p className="text-center text-xs text-slate-400 mt-3">
-                            {!photo && !coords ? 'Add a photo and detect your location to continue' : !photo ? 'Add a photo to continue' : 'Auto-detect your location to continue'}
+                            {!photo && !coords ? 'Add a photo and detect your location to continue' : (!photo ? 'Add a photo to continue' : (!city ? 'Select a city to continue' : 'Auto-detect your location to continue'))}
                         </p>
                     )}
                 </section>

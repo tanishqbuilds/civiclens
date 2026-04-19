@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http');
+const path = require('path');
 
 const ticketRoutes = require('./src/routes/ticketsRoutes');
 const authRoutes = require('./src/routes/authRoutes');
@@ -26,6 +27,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ========================
 // Routes

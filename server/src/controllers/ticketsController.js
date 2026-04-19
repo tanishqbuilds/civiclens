@@ -197,7 +197,7 @@ async function getTickets(req, res) {
 }
 
 async function postTicket(req, res) {
-    const { description, longitude, latitude } = req.body;
+    const { description, longitude, latitude, city } = req.body;
     const uploadedPhoto = req.file;
 
     // ── 1. Validate required fields ──────────────────────────────
@@ -270,11 +270,13 @@ async function postTicket(req, res) {
 
     // ── 4. Save to MongoDB (if connected) ─────────────────────────
     let mongoId = null;
+    const reportedBy = req.user ? (req.user.id || req.user._id) : null;
     if (mongoose.connection.readyState === 1) {
         try {
             console.log('Saving ticket image URL:', photoUrl);
             const doc = await TicketModel.create({
                 description: description || '',
+                city: city || '',
                 photoUrl,
                 location: {
                     type: 'Point',
@@ -299,6 +301,7 @@ async function postTicket(req, res) {
     // ── 5. Sync in-memory store (keeps GET endpoints consistent) ──
     const ticket = createTicket({
         description,
+        city: city || '',
         photoUrl,
         longitude: parsedLongitude,
         latitude: parsedLatitude,
@@ -435,68 +438,78 @@ async function getDashboardStats(req, res) {
 }
 
 async function getMyTickets(req, res) {
-    if (!req.user) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    // 1. Authentication & ID Extraction
+    const userId = req.user ? (req.user.id || req.user._id) : null;
+    if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: User ID missing' });
     }
-    const userId = req.user.id || req.user._id;
 
+    // 2. Parse Pagination and Query Params
     const { status, category, sort } = req.query;
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const skip = (page - 1) * limit;
+
+    // 3. Define Sorting Logic
+    const sortableFields = new Set(['severityScore', 'createdAt']);
+    let sortField = 'createdAt';
+    let sortDesc = true;
+
+    if (sort) {
+        const isDesc = sort.startsWith('-');
+        const rawField = isDesc ? sort.slice(1) : sort;
+        const sortMap = { severity: 'severityScore' };
+        const mappedField = sortMap[rawField] || rawField;
+
+        if (sortableFields.has(mappedField)) {
+            sortField = mappedField;
+            sortDesc = isDesc;
+        }
+    }
 
     let tickets = [];
 
+    // 4. Execution Logic (DB with In-Memory Fallback)
     if (mongoose.connection.readyState === 1) {
         try {
             const query = { reportedBy: userId };
             if (status) query.status = status;
             if (category) query.aiCategory = category;
 
-            const sortableFields = new Set(['severityScore', 'createdAt']);
-            let sortField = 'createdAt';
-            let sortDesc = true;
-            if (sort) {
-                const desc = sort.startsWith('-');
-                const raw = desc ? sort.slice(1) : sort;
-                const sortMap = { severity: 'severityScore' };
-                const mapped = sortMap[raw] || raw;
-                if (sortableFields.has(mapped)) {
-                    sortField = mapped;
-                    sortDesc = desc;
-                }
-            }
+            const sortObj = { [sortField]: sortDesc ? -1 : 1 };
 
-            const sortObj = {};
-            sortObj[sortField] = sortDesc ? -1 : 1;
-
-            tickets = await TicketModel.find(query).sort(sortObj).lean();
+            tickets = await TicketModel.find(query)
+                .sort(sortObj)
+                .skip(skip)
+                .limit(limit)
+                .lean();
         } catch (err) {
-            console.error('MongoDB getMyTickets query failed:', err.message);
+            console.error('MongoDB query failed, falling back to memory:', err.message);
+            // Fallback to memory logic if DB fails mid-connection
+            tickets = handleInMemoryData();
         }
     } else {
-        const filtered = applyGeoFilter([...getAllTickets()], req.query);
-        tickets = filtered.filter(t => String(t.reportedBy) === String(userId));
-        if (status) {
-            tickets = tickets.filter(t => t.status === status);
+        tickets = handleInMemoryData();
+    }
+
+    // 5. Helper Function for In-Memory Processing
+    function handleInMemoryData() {
+        let localTickets = typeof getAllTickets === 'function' ? [...getAllTickets()] : [];
+
+        // Apply Geo Filter if available (from upstream)
+        if (typeof applyGeoFilter === 'function') {
+            localTickets = applyGeoFilter(localTickets, req.query);
         }
-        if (category) {
-            tickets = tickets.filter(t => t.aiCategory === category);
-        }
-        
-        const sortableFields = new Set(['severityScore', 'createdAt']);
-        let sortField = 'createdAt';
-        let sortDesc = true;
-        if (sort) {
-            const desc = sort.startsWith('-');
-            const raw = desc ? sort.slice(1) : sort;
-            const sortMap = { severity: 'severityScore' };
-            const mapped = sortMap[raw] || raw;
-            if (sortableFields.has(mapped)) {
-                sortField = mapped;
-                sortDesc = desc;
-            }
-        }
-        tickets.sort((a, b) => {
+
+        // Filter by User, Status, and Category
+        let filtered = localTickets.filter(t =>
+            String(t.reportedBy) === String(userId) &&
+            (!status || t.status === status) &&
+            (!category || t.aiCategory === category)
+        );
+
+        // Sort
+        filtered.sort((a, b) => {
             let cmp;
             if (sortField === 'createdAt') {
                 cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -505,8 +518,12 @@ async function getMyTickets(req, res) {
             }
             return sortDesc ? -cmp : cmp;
         });
+
+        // Manual Pagination for local array
+        return filtered.slice(skip, skip + limit);
     }
 
+    // Return tickets (usually followed by res.json({ success: true, data: tickets }))
     const total = tickets.length;
     const start = (page - 1) * limit;
     const paginated = tickets.slice(start, start + limit).map(withDisplayPhoto);

@@ -115,7 +115,7 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#050816] font-display text-white overflow-x-hidden">
+        <div className="min-h-screen bg-slate-50 font-display text-slate-900 overflow-x-hidden">
 
             {/* ── Ambient Gradient Orbs ── */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
@@ -160,14 +160,14 @@ export default function LandingPage() {
             />
 
             {/* ── Navigation ── */}
-            <nav className="relative z-50 w-full border-b border-white/5">
+            <nav className="relative z-50 w-full border-b border-slate-200 bg-slate-1000 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-2.5 group">
-                        <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl w-9 h-9 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-shadow">
+                    <Link to={isUserAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
+                        <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl w-9 h-9 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/40 transition-shadow">
                             <Icon name="location_city" className="text-xl" />
                         </div>
                         <span className="text-xl font-black tracking-tight">
-                            Civic<span className="text-indigo-400">Lens</span>
+                            Civic<span className="text-indigo-600">Lens</span>
                         </span>
                     </Link>
 
@@ -175,7 +175,7 @@ export default function LandingPage() {
                         {isUserAuthenticated ? (
                             <Link
                                 to="/dashboard"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-indigo-300 hover:text-white hover:bg-white/5 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-indigo-300 hover:text-indigo-600 hover:bg-white/5 transition-all"
                             >
                                 <Icon name="dashboard" className="text-lg" />
                                 My Dashboard
@@ -183,7 +183,7 @@ export default function LandingPage() {
                         ) : (
                             <Link
                                 to="/auth"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-white hover:bg-white/5 transition-all"
                                 id="nav-login-btn"
                             >
                                 <Icon name="login" className="text-lg" />
@@ -205,9 +205,9 @@ export default function LandingPage() {
             <section className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 pt-20 sm:pt-28 pb-20">
                 <div className="max-w-3xl mx-auto text-center">
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 landing-fade-up" style={{ animationDelay: '0s' }}>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 mb-8 landing-fade-up" style={{ animationDelay: '0s' }}>
                         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-xs font-semibold text-slate-300 tracking-wider uppercase">AI-Powered Civic Platform</span>
+                        <span className="text-xs font-semibold text-indigo-700 tracking-wider uppercase">AI-Powered Civic Platform</span>
                     </div>
 
                     {/* Headline */}
@@ -223,11 +223,11 @@ export default function LandingPage() {
                             <div className="absolute -bottom-1 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500/60 to-cyan-500/60 rounded-full" />
                         </span>
                         <br />
-                        <span className="text-slate-300">Fix Your City</span>
+                        <span className="text-slate-800">Fix Your City</span>
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-lg sm:text-xl text-slate-400 mt-6 max-w-xl mx-auto leading-relaxed landing-fade-up" style={{ animationDelay: '0.2s' }}>
+                    <p className="text-lg sm:text-xl text-slate-600 mt-6 max-w-xl mx-auto leading-relaxed landing-fade-up" style={{ animationDelay: '0.2s' }}>
                         Snap a photo. Drop a pin. AI handles the rest —
                         categorizing, prioritizing, and routing civic issues to the right authorities.
                     </p>
@@ -247,7 +247,7 @@ export default function LandingPage() {
                         </button>
                         <Link
                             to="/auth"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all"
                             id="hero-login-btn"
                         >
                             <Icon name="shield_person" className="text-xl" />
@@ -256,31 +256,31 @@ export default function LandingPage() {
                     </div>
 
                     {/* Trust indicators */}
-                    <div className="flex items-center justify-center gap-6 mt-12 text-xs text-slate-500 landing-fade-up" style={{ animationDelay: '0.5s' }}>
+                    {/* <div className="flex items-center justify-center gap-6 mt-12 text-xs text-slate-600 landing-fade-up" style={{ animationDelay: '0.5s' }}>
                         <div className="flex items-center gap-1.5">
-                            <Icon name="lock" className="text-sm text-slate-500" />
+                            <Icon name="lock" className="text-sm text-slate-600" />
                             No login required to report
                         </div>
                         <div className="hidden sm:flex items-center gap-1.5">
-                            <Icon name="bolt" className="text-sm text-slate-500" />
+                            <Icon name="bolt" className="text-sm text-slate-600" />
                             30-second submission
                         </div>
                         <div className="hidden sm:flex items-center gap-1.5">
-                            <Icon name="verified" className="text-sm text-slate-500" />
+                            <Icon name="verified" className="text-sm text-slate-600" />
                             AI-verified
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Hero visual — Floating glass card mockup */}
                 <div className="relative mt-16 sm:mt-20 max-w-4xl mx-auto landing-fade-up" style={{ animationDelay: '0.55s' }}>
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm p-1">
-                        <div className="rounded-[20px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-10">
+                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white shadow-xl shadow-indigo-900/5 p-1">
+                        <div className="rounded-[20px] bg-white pb-6 pt-6 pl-10 pr-10 border border-slate-100 p-6 sm:p-10">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-3 h-3 rounded-full bg-red-500/60" />
                                 <div className="w-3 h-3 rounded-full bg-amber-500/60" />
                                 <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-                                <span className="ml-3 text-xs text-slate-500 font-mono">CivicLens Dashboard</span>
+                                <span className="ml-3 text-xs text-slate-600 font-mono">CivicLens Dashboard</span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {[
@@ -292,7 +292,7 @@ export default function LandingPage() {
                                     <div key={s.label} className="bg-white/5 rounded-xl p-4 border border-white/5">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Icon name={s.icon} className={`text-lg ${s.color}`} />
-                                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{s.label}</span>
+                                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold">{s.label}</span>
                                         </div>
                                         <span className={`text-2xl font-black ${s.color}`}>{s.val}</span>
                                     </div>
@@ -314,7 +314,7 @@ export default function LandingPage() {
             </section>
 
             {/* ── How It Works ── */}
-            <section className="relative z-10 py-24 border-t border-white/5">
+            <section className="relative z-10 py-24 border-t border-slate-200">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8">
                     <div className="text-center mb-16">
                         <p className="text-xs font-black uppercase tracking-[0.25em] text-indigo-400 mb-3">How It Works</p>
@@ -330,13 +330,13 @@ export default function LandingPage() {
                             { step: '03', icon: 'engineering', title: 'Resolution', desc: 'Officers are dispatched based on priority heatmaps' },
                         ].map((s, i) => (
                             <div key={s.step} className="relative group">
-                                <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-300">
-                                    <div className="text-[60px] font-black text-white/[0.04] absolute top-4 right-6 select-none">{s.step}</div>
+                                <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-8 hover:bg-white shadow-md border-slate-300 transition-all duration-300">
+                                    <div className="text-[60px] font-black text-slate-100 absolute top-4 right-6 select-none">{s.step}</div>
                                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border border-indigo-500/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                                         <Icon name={s.icon} className="text-2xl text-indigo-400" />
                                     </div>
                                     <h3 className="text-xl font-bold mb-2">{s.title}</h3>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+                                    <p className="text-sm text-slate-600 leading-relaxed">{s.desc}</p>
                                 </div>
                                 {i < 2 && (
                                     <div className="hidden sm:block absolute top-1/2 -right-4 z-10">
@@ -354,22 +354,22 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-5 sm:px-8">
                     <div className="text-center mb-16">
                         <p className="text-xs font-black uppercase tracking-[0.25em] text-indigo-400 mb-3">Platform Features</p>
-                        <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+                        {/* <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
                             Built for <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Impact</span>
-                        </h2>
+                        </h2> */}
                     </div>
 
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {FEATURES.map((f) => (
                             <div
                                 key={f.title}
-                                className="group bg-white/[0.03] border border-white/5 rounded-2xl p-6 hover:bg-white/[0.06] hover:border-white/10 hover:-translate-y-1 transition-all duration-300"
+                                className="group bg-white border border-slate-200 shadow-sm rounded-2xl p-6 hover:bg-white shadow-md border-slate-300 hover:-translate-y-1 transition-all duration-300"
                             >
                                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
                                     <Icon name={f.icon} className="text-xl text-white" />
                                 </div>
                                 <h3 className="text-lg font-bold mb-2">{f.title}</h3>
-                                <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                                <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -377,7 +377,7 @@ export default function LandingPage() {
             </section>
 
             {/* ── Stats ── */}
-            <section ref={statsRef} className="relative z-10 py-20 border-t border-b border-white/5">
+            <section ref={statsRef} className="relative z-10 py-20 border-t border-b border-slate-200">
                 <div className="max-w-5xl mx-auto px-5 sm:px-8">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                         {STATS.map((s) => (
@@ -385,7 +385,7 @@ export default function LandingPage() {
                                 <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                                     <AnimatedCounter target={s.value} suffix={s.suffix} inView={statsInView} />
                                 </div>
-                                <p className="text-sm text-slate-500 mt-2 font-medium">{s.label}</p>
+                                <p className="text-sm text-slate-600 mt-2 font-medium">{s.label}</p>
                             </div>
                         ))}
                     </div>
@@ -414,7 +414,7 @@ export default function LandingPage() {
                         </button>
                         <Link
                             to="/auth?mode=signup"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all"
                             id="cta-signup-btn"
                         >
                             Create Account
@@ -424,7 +424,7 @@ export default function LandingPage() {
             </section>
 
             {/* ── Footer ── */}
-            <footer className="relative z-10 border-t border-white/5 py-10">
+            <footer className="relative z-10 border-t border-slate-200 py-10">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-lg w-7 h-7 flex items-center justify-center">
@@ -432,10 +432,10 @@ export default function LandingPage() {
                         </div>
                         <span className="text-sm font-bold text-slate-400">CivicLens</span>
                     </div>
-                    <p className="text-xs text-slate-600">
+                    {/* <p className="text-xs text-slate-600">
                         Built for HackOverflow 2026 · SIH25031 — Govt. of Jharkhand
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                    </p> */}
+                    <div className="flex items-center gap-4 text-sm text-slate-600">
                         <Link to="/auth" className="hover:text-white transition-colors">Login</Link>
                         <Link to="/auth?mode=signup" className="hover:text-white transition-colors">Sign Up</Link>
                         <Link to="/admin/login" className="hover:text-white transition-colors">Admin</Link>

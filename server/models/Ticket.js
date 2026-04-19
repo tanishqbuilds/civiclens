@@ -3,6 +3,11 @@ const mongoose = require('mongoose');
 const ticketSchema = new mongoose.Schema(
     {
         // --- Citizen Input ---
+        city: {
+            type: String,
+            trim: true,
+            default: '',
+        },
         description: {
             type: String,
             trim: true,

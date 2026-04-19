@@ -40,7 +40,7 @@ function getAllTickets() {
     return tickets;
 }
 
-function createTicket({ description, photoUrl, longitude, latitude, aiCategory, aiConfidence, severityScore, mongoId }) {
+function createTicket({ description, photoUrl, longitude, latitude, aiCategory, aiConfidence, severityScore, mongoId, reportedBy }) {
     const ticketId = mongoId ? String(mongoId) : String(nextId++);
     if (!mongoId) nextId = Math.max(nextId, Number(ticketId) + 1);
     const newTicket = {
@@ -56,6 +56,7 @@ function createTicket({ description, photoUrl, longitude, latitude, aiCategory, 
         aiConfidence: aiConfidence ?? 0,
         severityScore: severityScore ?? 5,
         status: 'open',
+        reportedBy: reportedBy || null,
         createdAt: new Date().toISOString(),
     };
 
@@ -106,6 +107,7 @@ function loadFromMongo(docs) {
             aiConfidence: doc.aiConfidence ?? 0,
             severityScore: doc.severityScore ?? 5,
             status: doc.status || 'open',
+            reportedBy: doc.reportedBy ? String(doc.reportedBy) : null,
             createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
         });
     }

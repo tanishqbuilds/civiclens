@@ -32,6 +32,8 @@ export default function AuthPage() {
     const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
     const [department, setDepartment] = useState('');
+    const [city, setCity] = useState('');
+    const [idProof, setIdProof] = useState(null);
 
     const redirectTo = searchParams.get('redirect');
 
@@ -41,9 +43,9 @@ export default function AuthPage() {
             if (redirectTo) {
                 navigate(redirectTo, { replace: true });
             } else if (user?.role === 'officer') {
-                navigate('/admin/login', { replace: true });
+                navigate('/officer', { replace: true });
             } else {
-                navigate('/report', { replace: true });
+                navigate('/dashboard', { replace: true });
             }
         }
     }, [isUserAuthenticated, navigate, redirectTo, user]);
@@ -73,16 +75,29 @@ export default function AuthPage() {
                 await userLogin({ email, password });
                 toast.success('Welcome back!');
             } else {
-                await userSignup({ name, email, password, role, phone, department });
+                if (role === 'officer') {
+                    if (!city || !idProof) {
+                        toast.error('Working city and ID Proof are required for officers.');
+                        setSubmitting(false);
+                        return;
+                    }
+                    const formData = new FormData();
+                    formData.append('name', name);
+                    formData.append('email', email);
+                    formData.append('password', password);
+                    formData.append('role', role);
+                    formData.append('phone', phone);
+                    formData.append('department', department);
+                    formData.append('city', city);
+                    formData.append('idProof', idProof);
+                    await userSignup(formData);
+                } else {
+                    await userSignup({ name, email, password, role, phone, department });
+                }
                 toast.success('Account created successfully!');
             }
 
-            // Redirect
-            if (redirectTo) {
-                navigate(redirectTo, { replace: true });
-            } else {
-                navigate('/report', { replace: true });
-            }
+            // Redirect is handled by the useEffect watching isUserAuthenticated
         } catch (err) {
             const msg = err?.response?.data?.error || 'Something went wrong. Please try again.';
             toast.error(msg);
@@ -240,17 +255,54 @@ export default function AuthPage() {
 
                     {/* Department (officer only in signup) */}
                     {mode === 'signup' && role === 'officer' && (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</label>
-                            <div className="relative">
-                                <Icon name="apartment" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
-                                <input
-                                    type="text"
-                                    value={department}
-                                    onChange={(e) => setDepartment(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
-                                    placeholder="Municipal Corporation"
-                                />
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</label>
+                                <div className="relative">
+                                    <Icon name="apartment" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                                    <input
+                                        type="text"
+                                        value={department}
+                                        onChange={(e) => setDepartment(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        placeholder="Municipal Corporation"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Working City *</label>
+                                <div className="relative">
+                                    <Icon name="location_on" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <select
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all appearance-none"
+                                    >
+                                        <option value="" className="text-slate-900">Select City</option>
+                                        <option value="Mumbai" className="text-slate-900">Mumbai</option>
+                                        <option value="Navi Mumbai" className="text-slate-900">Navi Mumbai</option>
+                                        <option value="Panvel" className="text-slate-900">Panvel</option>
+                                        <option value="Vashi" className="text-slate-900">Vashi</option>
+                                        <option value="Wadala" className="text-slate-900">Wadala</option>
+                                        <option value="Chunabhatti" className="text-slate-900">Chunabhatti</option>
+                                        <option value="Thane" className="text-slate-900">Thane</option>
+                                        <option value="Kalyan" className="text-slate-900">Kalyan</option>
+                                    </select>
+                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">ID Proof Image *</label>
+                                <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl p-2">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setIdProof(e.target.files[0])}
+                                        className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/20 file:text-indigo-400 hover:file:bg-indigo-500/30 cursor-pointer"
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}
