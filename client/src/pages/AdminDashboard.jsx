@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import MapView, { severityColor } from "../components/MapView";
-import { getTickets, updateTicketStatus, getStats, getAllUsers } from "../services/api";
+import { getTickets, updateTicketStatus, getStats, getAllUsers, approveUser, rejectUser, getNotifications, markNotificationsRead, assignOfficer } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { debugLog } from "../utils/debug";
 
@@ -123,6 +123,11 @@ function AdminDashboard() {
   const wsRef = useRef(null);
   const wsRetryRef = useRef(null);
 
+  // Admin notifications
+  const [adminNotifications, setAdminNotifications] = useState([]);
+  const [adminUnread, setAdminUnread] = useState(0);
+  const [showAdminNotifs, setShowAdminNotifs] = useState(false);
+
   // Jurisdiction-derived map props
   const jurisdiction = admin?.jurisdiction ?? null;
   const mapCenter = jurisdiction ? jurisdiction.center : [78.9629, 20.5937];
@@ -191,6 +196,38 @@ function AdminDashboard() {
       setLoading(false);
     }
   }, [filters, jurisdiction, bounds]);
+
+  // ── Build admin notifications from data ──
+  useEffect(() => {
+    const notifs = [];
+    // Pending officer registrations
+    const pending = users.filter(u => u.role === 'officer' && u.status === 'pending');
+    pending.forEach(u => {
+      notifs.push({
+        _id: `pending-${u._id}`,
+        message: `New officer registration: ${u.name} (${u.jurisdiction?.city || 'unknown city'})`,
+        type: 'pending_officer',
+        userId: u._id,
+        createdAt: u.createdAt,
+        read: false,
+      });
+    });
+    // Recent tickets (last 20)
+    const recent = [...tickets].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 20);
+    recent.forEach(t => {
+      notifs.push({
+        _id: `ticket-${t._id}`,
+        message: `New ${(t.issueCategory || t.aiCategory || 'issue').replace('_', ' ')} reported in ${t.city || 'unknown area'}`,
+        type: 'new_ticket',
+        ticketId: t._id,
+        createdAt: t.createdAt,
+        read: false,
+      });
+    });
+    notifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    setAdminNotifications(notifs.slice(0, 30));
+    setAdminUnread(pending.length + Math.min(recent.length, 5));
+  }, [tickets, users]);
 
   // ── WebSocket real-time updates ─────────────────────────────────────────
   useEffect(() => {
@@ -292,6 +329,23 @@ function AdminDashboard() {
     }
   };
 
+  // ── Assign Officer ──
+  const handleAssignOfficer = async (ticketId, officerId) => {
+    try {
+      const res = await assignOfficer(ticketId, officerId);
+      const updatedTicket = res.data.data;
+      setTickets((prev) =>
+        prev.map((t) => (t._id === ticketId || t.id === ticketId) ? updatedTicket : t),
+      );
+      if (selectedTicket?._id === ticketId || selectedTicket?.id === ticketId) {
+        setSelectedTicket(updatedTicket);
+      }
+      toast.success("Officer assigned successfully!");
+    } catch {
+      toast.error("Failed to assign officer.");
+    }
+  };
+
   // ── Map markers ──
   const mapMarkers = useMemo(
     () =>
@@ -345,6 +399,62 @@ function AdminDashboard() {
                 
           </div>
           <div className="flex items-center gap-4">
+            {/* Admin Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowAdminNotifs(!showAdminNotifs); if (!showAdminNotifs) setAdminUnread(0); }}
+                className="liquid-glass p-2 rounded-lg hover:bg-white/60 transition-colors flex items-center justify-center relative"
+                title="Notifications"
+              >
+                <Icon name="notifications" className="text-primary" />
+                {adminUnread > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {adminUnread > 9 ? '9+' : adminUnread}
+                  </span>
+                )}
+              </button>
+              {showAdminNotifs && (
+                <div className="absolute right-0 top-12 w-96 max-h-[500px] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 z-50">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 className="font-bold text-sm">Admin Notifications</h3>
+                    <span className="text-[10px] text-slate-400">{adminNotifications.length} total</span>
+                  </div>
+                  {adminNotifications.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-slate-400">No notifications</div>
+                  ) : (
+                    adminNotifications.map((n) => (
+                      <div
+                        key={n._id}
+                        onClick={() => {
+                          setShowAdminNotifs(false);
+                          if (n.type === 'pending_officer') {
+                            setActiveTab('users');
+                          } else if (n.type === 'new_ticket' && n.ticketId) {
+                            setActiveTab('tickets');
+                            const t = tickets.find(t => String(t._id) === String(n.ticketId));
+                            if (t) setSelectedTicket(t);
+                          }
+                        }}
+                        className="px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Icon
+                            name={n.type === 'pending_officer' ? 'person_add' : 'report'}
+                            className={`text-lg flex-shrink-0 mt-0.5 ${n.type === 'pending_officer' ? 'text-amber-500' : 'text-primary'}`}
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-slate-700">{n.message}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={fetchAll}
               className="liquid-glass p-2 rounded-lg hover:bg-white/60 transition-colors flex items-center justify-center"
@@ -657,7 +767,74 @@ function AdminDashboard() {
         )}
 
         {activeTab === 'users' && (
-          <div className="liquid-glass rounded-xl overflow-hidden shadow-sm flex flex-col h-[700px]">
+          <div className="space-y-6">
+            {/* Pending Officers Section */}
+            {(() => {
+              const pendingOfficers = users.filter(u => u.role === 'officer' && u.status === 'pending');
+              if (pendingOfficers.length === 0) return null;
+              return (
+                <div className="liquid-glass rounded-xl overflow-hidden shadow-sm">
+                  <div className="p-4 border-b border-amber-200/50 bg-amber-50/50 flex items-center gap-3">
+                    <Icon name="pending_actions" className="text-amber-600 text-xl" />
+                    <h3 className="font-bold text-sm text-amber-800">Pending Officer Approvals ({pendingOfficers.length})</h3>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {pendingOfficers.map(u => (
+                      <div key={u._id} className="p-5 flex flex-col sm:flex-row items-start gap-4 hover:bg-amber-50/30 transition-colors">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-slate-800">{u.name}</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">PENDING</span>
+                          </div>
+                          <p className="text-xs text-slate-500">{u.email}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+                            <span className="flex items-center gap-1"><Icon name="location_city" className="text-[14px] text-primary" />{u.jurisdiction?.city || '-'}</span>
+                            <span className="flex items-center gap-1"><Icon name="category" className="text-[14px] text-primary" />{u.issueCategory?.replace('_', ' ') || '-'}</span>
+                            <span className="flex items-center gap-1"><Icon name="apartment" className="text-[14px] text-primary" />{u.department || '-'}</span>
+                          </div>
+                          {u.idProofUrl && (
+                            <a href={u.idProofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline mt-1">
+                              <Icon name="description" className="text-[14px]" /> View ID Proof Document
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await approveUser(u._id);
+                                toast.success(`${u.name} approved`);
+                                const usRes = await getAllUsers();
+                                setUsers(usRes.data.data || []);
+                              } catch { toast.error('Failed to approve'); }
+                            }}
+                            className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-bold hover:bg-emerald-600 transition-colors flex items-center gap-1"
+                          >
+                            <Icon name="check" className="text-[16px]" /> Approve
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await rejectUser(u._id);
+                                toast.success(`${u.name} rejected`);
+                                const usRes = await getAllUsers();
+                                setUsers(usRes.data.data || []);
+                              } catch { toast.error('Failed to reject'); }
+                            }}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors flex items-center gap-1"
+                          >
+                            <Icon name="close" className="text-[16px]" /> Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* All Users Table */}
+            <div className="liquid-glass rounded-xl overflow-hidden shadow-sm flex flex-col" style={{ maxHeight: '700px' }}>
              <div className="p-4 border-b border-slate-200/50 flex flex-wrap gap-4 items-center justify-between bg-white/10">
                 <div className="flex gap-3 flex-wrap">
                    <div className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium">
@@ -688,7 +865,9 @@ function AdminDashboard() {
                       <tr>
                         <th className="px-6 py-4">Name</th>
                         <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4">Status</th>
                         <th className="px-6 py-4">City</th>
+                        <th className="px-6 py-4">Domain</th>
                         <th className="px-6 py-4">Contact</th>
                         <th className="px-6 py-4">ID Proof</th>
                       </tr>
@@ -707,7 +886,18 @@ function AdminDashboard() {
                                {(u.role || 'citizen').toUpperCase()}
                             </span>
                           </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${
+                              u.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                              u.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              u.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-slate-100 text-slate-700'
+                            }`}>
+                               {(u.status || 'approved').toUpperCase()}
+                            </span>
+                          </td>
                           <td className="px-6 py-4 text-sm font-medium">{u.jurisdiction?.city || '-'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{u.issueCategory?.replace('_', ' ') || '-'}</td>
                           <td className="px-6 py-4 text-sm text-slate-500">{u.phone || '-'}</td>
                           <td className="px-6 py-4">
                             {u.idProofUrl ? (
@@ -721,6 +911,7 @@ function AdminDashboard() {
                     </tbody>
                 </table>
              </div>
+            </div>
           </div>
         )}
       </main>
@@ -732,7 +923,14 @@ function AdminDashboard() {
           onClose={() => setSelectedTicket(null)}
           onStatusChange={handleStatusChange}
           isUpdating={updatingStatus}
+          users={users}
+          onAssignOfficer={handleAssignOfficer}
         />
+      )}
+
+      {/* Click outside to close admin notifications */}
+      {showAdminNotifs && (
+        <div className="fixed inset-0 z-30" onClick={() => setShowAdminNotifs(false)} />
       )}
     </div>
   );
@@ -819,8 +1017,16 @@ function EmptyState() {
 
 // ─── TicketModal ──────────────────────────────────────────────────────────────
 
-function TicketModal({ ticket, onClose, onStatusChange, isUpdating }) {
+function TicketModal({ ticket, onClose, onStatusChange, isUpdating, users, onAssignOfficer }) {
   const [status, setStatus] = useState(ticket.status);
+  const [selectedOfficerId, setSelectedOfficerId] = useState("");
+
+  const availableOfficers = users?.filter(
+    (u) =>
+      u.role === "officer" &&
+      u.status === "approved" &&
+      (!ticket.city || u.jurisdiction?.city === ticket.city)
+  ) || [];
 
   const hasCoords = ticket.location?.coordinates?.length === 2;
   const [lng, lat] = hasCoords ? ticket.location.coordinates : [null, null];
@@ -934,10 +1140,16 @@ function TicketModal({ ticket, onClose, onStatusChange, isUpdating }) {
                     <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-primary/10 text-primary">
                       {catLabel}
                     </span>
-                    <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                      {((ticket.aiConfidence ?? 0) * 100).toFixed(0)}%
-                      confidence
-                    </span>
+                    {(ticket.aiConfidence ?? 0) > 0 ? (
+                      <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                        {((ticket.aiConfidence ?? 0) * 100).toFixed(0)}%
+                        confidence
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                        Human Fallback
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1058,6 +1270,46 @@ function TicketModal({ ticket, onClose, onStatusChange, isUpdating }) {
                   name="expand_more"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
                 /></div>
+            </div>
+
+            {/* Officer Assignment Dropdown */}
+            <div className="flex flex-col gap-1.5 border-l border-slate-200/50 pl-6">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {ticket.assignedTo ? "Assigned Officer" : "Assign Officer"}
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="relative rounded-full px-1 bg-slate-100 text-slate-700 min-w-[160px]">
+                  <select
+                    value={selectedOfficerId}
+                    onChange={(e) => setSelectedOfficerId(e.target.value)}
+                    className="appearance-none bg-transparent w-full pl-3 pr-8 py-2 text-xs font-bold border-none focus:outline-none"
+                  >
+                    <option value="" disabled>
+                      {ticket.assignedOfficerName || "Select Officer..."}
+                    </option>
+                    {availableOfficers.map((o) => (
+                      <option key={o._id} value={o._id} className="text-slate-800 font-semibold">
+                        {o.name} ({o.issueCategory?.replace(/_/g, " ")})
+                      </option>
+                    ))}
+                  </select>
+                  <Icon
+                    name="expand_more"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none"
+                  />
+                </div>
+                {selectedOfficerId && (
+                  <button
+                    onClick={() => {
+                      onAssignOfficer(ticket._id, selectedOfficerId);
+                      setSelectedOfficerId("");
+                    }}
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold hover:bg-indigo-100 transition-colors"
+                  >
+                    Assign
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

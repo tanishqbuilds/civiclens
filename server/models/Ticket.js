@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const ticketUpdateSchema = new mongoose.Schema(
+    {
+        message: { type: String, required: true, trim: true, maxlength: 1000 },
+        postedBy: { type: String, ref: 'User', required: true },
+        postedByName: { type: String, default: '' },
+    },
+    { timestamps: true }
+);
+
 const ticketSchema = new mongoose.Schema(
     {
         // --- Citizen Input ---
@@ -43,7 +52,7 @@ const ticketSchema = new mongoose.Schema(
         // --- AI-Generated Fields ---
         aiCategory: {
             type: String,
-            enum: ['pothole', 'garbage', 'broken_streetlight', 'waterlogging', 'other', 'unclassified'],
+            enum: ['pothole', 'garbage_dump', 'electrical_hazard', 'waterlogging', 'blocked_drain', 'clean_street', 'unclassified'],
             default: 'unclassified',
         },
         aiConfidence: {
@@ -66,6 +75,20 @@ const ticketSchema = new mongoose.Schema(
             default: null,
         },
 
+        // --- Assignment ---
+        assignedTo: {
+            type: String,
+            ref: 'User',
+            default: null,
+        },
+        assignedOfficerName: {
+            type: String,
+            default: '',
+        },
+
+        // --- Live Updates from Officer ---
+        updates: [ticketUpdateSchema],
+
         // --- Workflow ---
         status: {
             type: String,
@@ -83,5 +106,8 @@ ticketSchema.index({ location: '2dsphere' });
 
 // Compound index for dashboard sorting
 ticketSchema.index({ status: 1, severityScore: -1 });
+
+// Index for officer assignment queries
+ticketSchema.index({ assignedTo: 1, status: 1 });
 
 module.exports = mongoose.model('Ticket', ticketSchema);

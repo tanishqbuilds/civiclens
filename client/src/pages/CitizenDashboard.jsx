@@ -1,18 +1,17 @@
 /**
  * CitizenDashboard — User dashboard for citizens to track their reports.
  * 
- * Aesthetic: Liquid Glass (Consistent with Landing Page & Report Page)
  * Features:
  * ✅ List of user-submitted tickets
- * ✅ Ticket status tracking (Open, In Progress, Resolved)
- * ✅ AI insights (Category, Severity)
- * ✅ Statistics summary
- * ✅ Mobile-responsive layouts
+ * ✅ Ticket detail modal with live updates timeline
+ * ✅ Notification bell with unread count
+ * ✅ Profile circle in navbar
+ * ✅ Enhanced navbar sizing
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMyTickets, getMyReputation } from '../services/api';
+import { getMyTickets, getMyReputation, getTicketUpdates, getNotifications, markNotificationsRead } from '../services/api';
 import toast from 'react-hot-toast';
 
 function Icon({ name, className = '' }) {
@@ -33,6 +32,15 @@ const CATEGORY_ICONS = {
     other: 'more_horiz',
 };
 
+const CAT_LABEL = {
+    pothole: 'Pothole',
+    garbage: 'Garbage Dump',
+    broken_streetlight: 'Broken Streetlight',
+    waterlogging: 'Waterlogging',
+    other: 'Other Issue',
+    unclassified: 'Unclassified',
+};
+
 export default function CitizenDashboard() {
     const { user, userLogout, isUserAuthenticated, userLoading } = useAuth();
     const navigate = useNavigate();
@@ -41,6 +49,14 @@ export default function CitizenDashboard() {
     const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
     const [reputation, setReputation] = useState(null);
     const [repLoading, setRepLoading] = useState(true);
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [ticketUpdates, setTicketUpdates] = useState([]);
+    const [updatesLoading, setUpdatesLoading] = useState(false);
+
+    // Notifications
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     useEffect(() => {
         if (!userLoading && !isUserAuthenticated) {
@@ -51,6 +67,11 @@ export default function CitizenDashboard() {
         if (isUserAuthenticated) {
             fetchTickets();
             fetchReputation();
+            fetchNotifications();
+
+            // Poll for new notifications every 30s so live updates appear
+            const notifInterval = setInterval(fetchNotifications, 30000);
+            return () => clearInterval(notifInterval);
         }
     }, [isUserAuthenticated, userLoading, navigate]);
 
@@ -60,7 +81,6 @@ export default function CitizenDashboard() {
             const data = res.data.data;
             setTickets(data);
             
-            // Calculate stats
             const s = data.reduce((acc, t) => {
                 acc.total++;
                 if (t.status === 'resolved') acc.resolved++;
@@ -68,7 +88,6 @@ export default function CitizenDashboard() {
                 return acc;
             }, { total: 0, pending: 0, resolved: 0 });
             setStats(s);
-
         } catch (err) {
             toast.error('Failed to load your reports.');
             console.error(err);
@@ -84,9 +103,38 @@ export default function CitizenDashboard() {
                 setReputation(res.data);
             }
         } catch {
-            // Reputation is optional — silently degrade
+            // Reputation is optional
         } finally {
             setRepLoading(false);
+        }
+    }
+
+    async function fetchNotifications() {
+        try {
+            const res = await getNotifications();
+            setNotifications(res.data.data || []);
+            setUnreadCount(res.data.unreadCount || 0);
+        } catch { }
+    }
+
+    async function handleMarkRead() {
+        try {
+            await markNotificationsRead();
+            setUnreadCount(0);
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } catch { }
+    }
+
+    async function openTicketDetail(ticket) {
+        setSelectedTicket(ticket);
+        setUpdatesLoading(true);
+        try {
+            const res = await getTicketUpdates(ticket._id);
+            setTicketUpdates(res.data.data || []);
+        } catch {
+            setTicketUpdates([]);
+        } finally {
+            setUpdatesLoading(false);
         }
     }
 
@@ -110,20 +158,75 @@ export default function CitizenDashboard() {
             <div className="blob blob-a opacity-30" aria-hidden="true" />
             <div className="blob blob-b opacity-20" aria-hidden="true" />
 
-            {/* Header */}
+            {/* Header — Enhanced Size */}
             <header className="relative z-40 w-full glass border-b border-white/40 sticky top-0">
-                <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                        <div className="bg-primary text-white rounded-lg w-7 h-7 flex items-center justify-center shadow-md shadow-primary/30">
-                            <Icon name="location_city" className="text-[16px]" />
+                <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
+                    <Link to="/dashboard" className="flex items-center gap-2.5">
+                        <div className="bg-primary text-white rounded-lg w-9 h-9 flex items-center justify-center shadow-md shadow-primary/30">
+                            <Icon name="location_city" className="text-xl" />
                         </div>
-                        <span className="text-base font-black tracking-tight">CivicLens</span>
+                        <span className="text-lg font-black tracking-tight">CivicLens</span>
                     </Link>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
+                        {/* Notification Bell */}
+                        <div className="relative">
+                            <button
+                                onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications) handleMarkRead(); }}
+                                className="relative p-2 rounded-xl hover:bg-slate-100 transition-colors"
+                            >
+                                <Icon name="notifications" className="text-2xl text-slate-600" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Notification Dropdown */}
+                            {showNotifications && (
+                                <div className="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 z-50">
+                                    <div className="p-4 border-b border-slate-100">
+                                        <h3 className="font-bold text-sm">Notifications</h3>
+                                    </div>
+                                    {notifications.length === 0 ? (
+                                        <div className="p-6 text-center text-sm text-slate-400">No notifications yet</div>
+                                    ) : (
+                                        notifications.map((n, i) => (
+                                            <div
+                                                key={n._id || i}
+                                                onClick={() => {
+                                                    setShowNotifications(false);
+                                                    if (n.ticketId) {
+                                                        const t = tickets.find(t => String(t._id) === String(n.ticketId));
+                                                        if (t) openTicketDetail(t);
+                                                    }
+                                                }}
+                                                className={`px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${!n.read ? 'bg-primary/5' : ''}`}
+                                            >
+                                                <p className="text-sm font-medium text-slate-700">{n.message}</p>
+                                                <p className="text-[10px] text-slate-400 mt-1">
+                                                    {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Profile Circle */}
+                        <Link
+                            to="/profile"
+                            className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md hover:scale-105 transition-transform"
+                            title="My Profile"
+                        >
+                            {user?.name?.[0]?.toUpperCase() || 'U'}
+                        </Link>
+
                         <button 
                             onClick={handleLogout}
-                            className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors"
+                            className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
                         >
                             Log Out
                         </button>
@@ -132,33 +235,12 @@ export default function CitizenDashboard() {
             </header>
 
             <main className="relative z-10 max-w-5xl mx-auto px-5 pt-8 space-y-8">
-                {/* Profile Section */}
-                <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-4">
-                            <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                                My Dashboard
-                            </h1>
-                            <Link 
-                                to="/report"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-bold text-xs shadow-md shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                            >
-                                <Icon name="add" className="text-[18px]" />
-                                Report Issue
-                            </Link>
-                        </div>
-                        <p className="text-sm text-slate-500 mt-1">Welcome back, {user?.name}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md border border-white p-2 rounded-2xl shadow-sm">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white font-black">
-                            {user?.name?.[0]}
-                        </div>
-                        <div className="pr-4">
-                            <p className="text-sm font-bold text-slate-800">{user?.role?.toUpperCase()}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{user?.email}</p>
-                        </div>
-                    </div>
+                {/* Dashboard Header */}
+                <section>
+                    <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                        My Dashboard
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">Welcome back, {user?.name}</p>
                 </section>
 
                 {/* Reputation + Stats Row */}
@@ -259,13 +341,13 @@ export default function CitizenDashboard() {
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
                                                 <div className="flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded-full">
-                                                    <Icon name={CATEGORY_ICONS[t.aiCategory] || 'interests'} className="text-[12px] text-primary" />
+                                                    <Icon name={CATEGORY_ICONS[t.issueCategory || t.aiCategory] || 'interests'} className="text-[12px] text-primary" />
                                                     <span className="text-[10px] font-black uppercase tracking-tight text-slate-600">
-                                                        {t.aiCategory?.replace('_', ' ')}
+                                                        {CAT_LABEL[t.issueCategory || t.aiCategory] || (t.issueCategory || t.aiCategory || '').replace('_', ' ')}
                                                     </span>
                                                 </div>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_CONFIG[t.status].color}`}>
-                                                    {STATUS_CONFIG[t.status].label}
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_CONFIG[t.status]?.color || ''}`}>
+                                                    {STATUS_CONFIG[t.status]?.label || t.status}
                                                 </span>
                                             </div>
                                             <p className="text-sm font-semibold text-slate-700 line-clamp-1 mb-1">
@@ -280,10 +362,19 @@ export default function CitizenDashboard() {
                                                     <Icon name="bolt" className="text-[12px] text-amber-500" />
                                                     Severity: {t.severityScore}/10
                                                 </span>
+                                                {t.assignedOfficerName && (
+                                                    <span className="flex items-center gap-1 text-primary">
+                                                        <Icon name="badge" className="text-[12px]" />
+                                                        {t.assignedOfficerName}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
-                                        <button className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-1 mt-2 group-hover:gap-2 transition-all">
+                                        <button
+                                            onClick={() => openTicketDetail(t)}
+                                            className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-1 mt-2 group-hover:gap-2 transition-all"
+                                        >
                                             View Details
                                             <Icon name="arrow_forward" className="text-[14px]" />
                                         </button>
@@ -294,6 +385,157 @@ export default function CitizenDashboard() {
                     )}
                 </section>
             </main>
+
+            {/* ── Ticket Detail Modal ── */}
+            {selectedTicket && (
+                <TicketDetailModal
+                    ticket={selectedTicket}
+                    updates={ticketUpdates}
+                    updatesLoading={updatesLoading}
+                    onClose={() => { setSelectedTicket(null); setTicketUpdates([]); }}
+                />
+            )}
+
+            {/* Click outside to close notifications */}
+            {showNotifications && (
+                <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
+            )}
+
+            {/* Floating Report Issue Button */}
+            <Link
+                to="/report"
+                className="fixed bottom-8 right-8 z-40 flex items-center gap-2.5 px-6 py-4 bg-gradient-to-r from-primary to-indigo-600 text-white font-bold rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 hover:shadow-primary/40 active:scale-95 transition-all group"
+                id="fab-report-issue"
+            >
+                <Icon name="add_circle" className="text-2xl group-hover:rotate-90 transition-transform duration-300" />
+                <span className="text-sm">Report Issue</span>
+            </Link>
+        </div>
+    );
+}
+
+// ─── Ticket Detail Modal ───
+function TicketDetailModal({ ticket, updates, updatesLoading, onClose }) {
+    const sevColor = ticket.severityScore >= 8 ? 'text-rose-600' : ticket.severityScore >= 6 ? 'text-amber-600' : ticket.severityScore >= 4 ? 'text-blue-600' : 'text-slate-500';
+    const catLabel = CAT_LABEL[ticket.issueCategory || ticket.aiCategory] || 'Unknown';
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm" onClick={onClose}>
+            <div
+                className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wider">
+                                {catLabel}
+                            </span>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${STATUS_CONFIG[ticket.status]?.color || ''}`}>
+                                {STATUS_CONFIG[ticket.status]?.label || ticket.status}
+                            </span>
+                        </div>
+                        <h2 className="text-xl font-black text-slate-900">Issue Details</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                        <Icon name="close" className="text-xl text-slate-400" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Photo */}
+                    {ticket.photoUrl && (
+                        <div className="rounded-2xl overflow-hidden aspect-video bg-slate-100 shadow-inner border border-slate-100">
+                            <img src={ticket.photoUrl} alt="Issue" className="w-full h-full object-cover" />
+                        </div>
+                    )}
+
+                    {/* Description */}
+                    {ticket.description && (
+                        <div className="bg-slate-50 p-4 rounded-xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Description</p>
+                            <p className="text-sm text-slate-700 leading-relaxed italic">"{ticket.description}"</p>
+                        </div>
+                    )}
+
+                    {/* Metadata Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="bg-slate-50 p-3 rounded-xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Severity</p>
+                            <p className={`text-lg font-black ${sevColor}`}>{ticket.severityScore}/10</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Reported</p>
+                            <p className="text-sm font-bold text-slate-700">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">City</p>
+                            <p className="text-sm font-bold text-slate-700">{ticket.city || 'N/A'}</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-xl col-span-2 sm:col-span-3">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Assigned Officer</p>
+                            <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                {ticket.assignedOfficerName ? (
+                                    <>
+                                        <span className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
+                                            {ticket.assignedOfficerName[0]}
+                                        </span>
+                                        {ticket.assignedOfficerName}
+                                    </>
+                                ) : (
+                                    <span className="text-slate-400">Not yet assigned</span>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Live Updates Timeline */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Icon name="update" className="text-primary text-xl" />
+                            <h3 className="font-bold text-sm text-slate-800">Live Updates</h3>
+                            {updates.length > 0 && (
+                                <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">{updates.length}</span>
+                            )}
+                        </div>
+
+                        {updatesLoading ? (
+                            <div className="flex justify-center py-6">
+                                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : updates.length === 0 ? (
+                            <div className="bg-slate-50 rounded-2xl p-6 text-center">
+                                <Icon name="hourglass_empty" className="text-3xl text-slate-300 mb-2" />
+                                <p className="text-sm text-slate-400">No updates yet. The assigned officer will post updates here.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {updates.map((u, i) => (
+                                    <div key={u._id || i} className="flex gap-3">
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                                {u.postedByName?.[0] || 'O'}
+                                            </div>
+                                            {i < updates.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 my-1" />}
+                                        </div>
+                                        <div className="bg-white border border-slate-100 rounded-2xl p-4 flex-1 shadow-sm">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs font-bold text-indigo-600">{u.postedByName || 'Officer'}</span>
+                                                <span className="text-[10px] text-slate-400">
+                                                    {u.createdAt ? new Date(u.createdAt).toLocaleString() : ''}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-slate-700">{u.message}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

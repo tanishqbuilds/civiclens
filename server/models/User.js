@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const notificationSchema = new mongoose.Schema(
+    {
+        message: { type: String, required: true },
+        ticketId: { type: String, default: null },
+        read: { type: Boolean, default: false },
+    },
+    { timestamps: true }
+);
+
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -28,6 +37,12 @@ const userSchema = new mongoose.Schema(
             enum: ['citizen', 'officer'],
             default: 'citizen',
         },
+        // Officer approval status
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'approved', // citizens get auto-approved; officers set to 'pending' at signup
+        },
         phone: {
             type: String,
             trim: true,
@@ -37,6 +52,12 @@ const userSchema = new mongoose.Schema(
         department: {
             type: String,
             trim: true,
+            default: '',
+        },
+        // The issue domain this officer handles
+        issueCategory: {
+            type: String,
+            enum: ['pothole', 'garbage_dump', 'electrical_hazard', 'waterlogging', 'blocked_drain', 'clean_street', 'unclassified', ''],
             default: '',
         },
         jurisdiction: {
@@ -52,6 +73,8 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        // In-app notifications
+        notifications: [notificationSchema],
     },
     {
         timestamps: true,
@@ -72,7 +95,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Index for quick lookups
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
+userSchema.index({ role: 1, status: 1, 'jurisdiction.city': 1, issueCategory: 1 });
 
 module.exports = mongoose.model('User', userSchema);

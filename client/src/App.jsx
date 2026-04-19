@@ -9,6 +9,7 @@ import CitizenDashboard from './pages/CitizenDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import OfficerDashboard from './pages/OfficerDashboard';
 import AdminLogin from './pages/AdminLogin';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -44,6 +45,9 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+
+                    {/* Profile */}
+                    <Route path="/profile" element={<ProfilePage />} />
 
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace />} />

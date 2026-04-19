@@ -126,12 +126,22 @@ export function AuthProvider({ children }) {
         setUser(null);
     }, []);
 
+    // Refresh user profile from server
+    const refreshUser = useCallback(async () => {
+        try {
+            const res = await getUserProfile();
+            setUser(res.data.user);
+        } catch {
+            // silently fail
+        }
+    }, []);
+
     return (
         <AuthContext.Provider value={{
             // Admin
             admin, loading, login, logout, isAuthenticated: !!admin,
             // User (citizen / officer)
-            user, userLoading, userSignup, userLogin: userLoginFn, userLogout, isUserAuthenticated: !!user,
+            user, userLoading, userSignup, userLogin: userLoginFn, userLogout, isUserAuthenticated: !!user, refreshUser,
         }}>
             {children}
         </AuthContext.Provider>

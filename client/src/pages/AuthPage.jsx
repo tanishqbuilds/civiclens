@@ -4,9 +4,9 @@
  * Features:
  * ✅ Toggle between Login & Signup
  * ✅ Role selector (Citizen / Officer)
+ * ✅ Officer fields: city, department, issue category, ID proof
+ * ✅ Pending approval message for officers
  * ✅ Glass morphism dark theme
- * ✅ Redirects post-login based on role
- * ✅ Supports ?mode=signup and ?redirect= query params
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -25,6 +25,7 @@ export default function AuthPage() {
     const [mode, setMode] = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'login');
     const [role, setRole] = useState('citizen');
     const [submitting, setSubmitting] = useState(false);
+    const [showPendingMsg, setShowPendingMsg] = useState(false);
 
     // Form fields
     const [name, setName] = useState('');
@@ -33,6 +34,7 @@ export default function AuthPage() {
     const [phone, setPhone] = useState('');
     const [department, setDepartment] = useState('');
     const [city, setCity] = useState('');
+    const [issueCategory, setIssueCategory] = useState('');
     const [idProof, setIdProof] = useState(null);
 
     const redirectTo = searchParams.get('redirect');
@@ -76,8 +78,8 @@ export default function AuthPage() {
                 toast.success('Welcome back!');
             } else {
                 if (role === 'officer') {
-                    if (!city || !idProof) {
-                        toast.error('Working city and ID Proof are required for officers.');
+                    if (!city || !idProof || !issueCategory) {
+                        toast.error('Working city, issue category, and ID Proof are required for officers.');
                         setSubmitting(false);
                         return;
                     }
@@ -89,15 +91,17 @@ export default function AuthPage() {
                     formData.append('phone', phone);
                     formData.append('department', department);
                     formData.append('city', city);
+                    formData.append('issueCategory', issueCategory);
                     formData.append('idProof', idProof);
                     await userSignup(formData);
+                    // Officers are pending — show the pending message
+                    setShowPendingMsg(true);
+                    return;
                 } else {
                     await userSignup({ name, email, password, role, phone, department });
                 }
                 toast.success('Account created successfully!');
             }
-
-            // Redirect is handled by the useEffect watching isUserAuthenticated
         } catch (err) {
             const msg = err?.response?.data?.error || 'Something went wrong. Please try again.';
             toast.error(msg);
@@ -105,6 +109,44 @@ export default function AuthPage() {
             setSubmitting(false);
         }
     };
+
+    // Pending approval screen
+    if (showPendingMsg) {
+        return (
+            <div className="relative min-h-screen flex items-center justify-center font-display bg-[#050816] text-white overflow-hidden px-4">
+                <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
+                    <div className="absolute w-[500px] h-[500px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', top: '-150px', left: '-100px' }} />
+                </div>
+                <div className="relative z-10 w-full max-w-md text-center">
+                    <div className="bg-white/[0.04] border border-white/10 rounded-3xl p-10 space-y-6 backdrop-blur-sm">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
+                            <Icon name="hourglass_top" className="text-4xl text-white" />
+                        </div>
+                        <h1 className="text-2xl font-black">Registration Submitted!</h1>
+                        <p className="text-slate-400 text-sm leading-relaxed">
+                            Your officer account has been created and is <span className="text-amber-400 font-bold">pending admin approval</span>. 
+                            You will be able to log in once an admin reviews and approves your documents.
+                        </p>
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-left">
+                            <p className="text-xs font-bold text-amber-400 mb-1">What happens next?</p>
+                            <ul className="text-xs text-slate-400 space-y-1">
+                                <li>• Admin reviews your ID proof documents</li>
+                                <li>• Once approved, you can log in with your credentials</li>
+                                <li>• You'll be assigned to handle {issueCategory.replace('_', ' ')} issues in {city}</li>
+                            </ul>
+                        </div>
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-all"
+                        >
+                            <Icon name="home" className="text-lg" />
+                            Back to Home
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative min-h-screen flex items-center justify-center font-display bg-[#050816] text-white overflow-hidden px-4">
@@ -253,7 +295,7 @@ export default function AuthPage() {
                         </div>
                     )}
 
-                    {/* Department (officer only in signup) */}
+                    {/* Officer-specific fields */}
                     {mode === 'signup' && role === 'officer' && (
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -288,6 +330,27 @@ export default function AuthPage() {
                                         <option value="Chunabhatti" className="text-slate-900">Chunabhatti</option>
                                         <option value="Thane" className="text-slate-900">Thane</option>
                                         <option value="Kalyan" className="text-slate-900">Kalyan</option>
+                                    </select>
+                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                </div>
+                            </div>
+
+                            {/* Issue Category */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Issue Domain *</label>
+                                <div className="relative">
+                                    <Icon name="category" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <select
+                                        value={issueCategory}
+                                        onChange={(e) => setIssueCategory(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all appearance-none"
+                                    >
+                                        <option value="" className="text-slate-900">Select your domain</option>
+                                        <option value="pothole" className="text-slate-900">Potholes / Road Damage</option>
+                                        <option value="garbage_dump" className="text-slate-900">Garbage / Sanitation</option>
+                                        <option value="waterlogging" className="text-slate-900">Waterlogging / Floods</option>
+                                        <option value="electrical_hazard" className="text-slate-900">Electrical Hazard</option>
+                                        <option value="blocked_drain" className="text-slate-900">Open/Blocked Drains</option>
                                     </select>
                                     <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
                                 </div>

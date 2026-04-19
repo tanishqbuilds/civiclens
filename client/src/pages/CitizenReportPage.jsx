@@ -452,6 +452,7 @@ function CitizenReportPage() {
                     </div>
                 </section>
 
+
                 {/* Submit Button */}
                 <section className="pt-4 pb-16">
                     <button

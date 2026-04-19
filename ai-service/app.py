@@ -10,21 +10,22 @@ print("Loading AI Model...")
 classifier = pipeline("zero-shot-image-classification", model="openai/clip-vit-base-patch32")
 
 LABEL_MAPPING = {
-    "a severe pothole, broken tarmac, or heavily damaged road surface": "Pothole",
-    "an overflowing garbage bin, litter, or pile of trash dumped on the street": "Garbage Dump",
-    "a flooded street, stagnant water, or severe road waterlogging": "Waterlogging",
-    "dangerous hanging electrical wires, tangled cables, or fallen poles": "Electrical Hazard",
-    "overflowing sewage, dirty water, or an open, blocked drainage system": "Open/Blocked Drain",
-    "a clean, normal, and well-maintained street with no visible issues": "Clean Street"
+    "a severe pothole, broken tarmac, or heavily damaged road surface": "pothole",
+    "an overflowing garbage bin, litter, or pile of trash dumped on the street": "garbage_dump",
+    "a flooded street, stagnant water, or severe road waterlogging": "waterlogging",
+    "dangerous hanging electrical wires, tangled cables, or fallen poles": "electrical_hazard",
+    "overflowing sewage, dirty water, or an open, blocked drainage system": "blocked_drain",
+    "a clean, normal, and well-maintained street with no visible issues": "clean_street"
 }
 ai_descriptions = list(LABEL_MAPPING.keys())
 
 # Define severity levels for the AI to choose from
 SEVERITY_PROMPTS = [
-    "minor or small issue, low impact",        # Score: 1-3
-    "moderate damage or noticeable issue",    # Score: 4-6
-    "severe, dangerous, or high-risk issue",  # Score: 7-9
-    "extreme emergency or life-threatening"    # Score: 10
+    "a tiny, barely visible, or negligible issue",
+    "a minor civic issue with small local impact",
+    "a significant and clearly visible civic problem",
+    "a severe, dangerous, or high-risk infrastructure failure",
+    "a catastrophic, life-threatening metropolitan emergency"
 ]
 
 
@@ -56,10 +57,11 @@ def classify_image():
     
     # Map the text label to a numeric score out of 10
     severity_map = {
-        SEVERITY_PROMPTS[0]: 3,  # Minor
-        SEVERITY_PROMPTS[1]: 6,  # Moderate
-        SEVERITY_PROMPTS[2]: 8,  # Severe
-        SEVERITY_PROMPTS[3]: 10  # Extreme
+        SEVERITY_PROMPTS[0]: 2,
+        SEVERITY_PROMPTS[1]: 4,
+        SEVERITY_PROMPTS[2]: 6,
+        SEVERITY_PROMPTS[3]: 8,
+        SEVERITY_PROMPTS[4]: 10
     }
     severity_score = severity_map[top_sev_label]
 
