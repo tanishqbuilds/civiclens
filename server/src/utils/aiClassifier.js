@@ -6,7 +6,7 @@ const FormData = require('form-data');
  * Flask endpoint expects POST /classify with field name "image".
  */
 async function classifyImage(imageBuffer, filename, mimeType) {
-    const baseUrl = process.env.FLASK_API_URL || process.env.AI_SERVICE_URL || 'http://localhost:5000';
+    const baseUrl = process.env.FLASK_API_URL || process.env.AI_SERVICE_URL || 'http://127.0.0.1:5000';
     const endpoint = `${baseUrl.replace(/\/$/, '')}/classify`;
 
     const formData = new FormData();

@@ -145,8 +145,14 @@ def update_user_reputation(user_id: str, mongo_uri: str = None) -> dict:
         tickets_col = db["tickets"]
 
         # Fetch all tickets reported by this user
+        # The Ticket model stores reportedBy as a String, so query both formats
         user_oid = ObjectId(user_id)
-        cursor = tickets_col.find({"reportedBy": user_oid})
+        cursor = tickets_col.find({
+            "$or": [
+                {"reportedBy": str(user_id)},
+                {"reportedBy": user_oid},
+            ]
+        })
         tickets = list(cursor)
         client.close()
 

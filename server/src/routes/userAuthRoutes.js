@@ -219,7 +219,7 @@ router.patch('/link-ticket', verifyUserToken, async (req, res) => {
  */
 router.get('/reputation', verifyUserToken, async (req, res) => {
     const axios = require('axios');
-    const flaskUrl = process.env.FLASK_API_URL || 'http://localhost:5000';
+    const flaskUrl = process.env.FLASK_API_URL || 'http://127.0.0.1:5000';
 
     try {
         const { data } = await axios.post(`${flaskUrl}/reputation`, {

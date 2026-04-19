@@ -6,7 +6,7 @@
  * ✅ Role selector (Citizen / Officer)
  * ✅ Officer fields: city, department, issue category, ID proof
  * ✅ Pending approval message for officers
- * ✅ Glass morphism dark theme
+ * ✅ Liquid glass light theme (matches Admin Dashboard)
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -113,23 +113,24 @@ export default function AuthPage() {
     // Pending approval screen
     if (showPendingMsg) {
         return (
-            <div className="relative min-h-screen flex items-center justify-center font-display bg-[#050816] text-white overflow-hidden px-4">
-                <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-                    <div className="absolute w-[500px] h-[500px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', top: '-150px', left: '-100px' }} />
-                </div>
+            <div className="relative min-h-screen flex items-center justify-center font-display bg-[#f6f6f8] text-slate-900 overflow-hidden px-4">
+                {/* Background decorative blurs */}
+                <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
+                <div className="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] -z-10 pointer-events-none" />
+
                 <div className="relative z-10 w-full max-w-md text-center">
-                    <div className="bg-white/[0.04] border border-white/10 rounded-3xl p-10 space-y-6 backdrop-blur-sm">
+                    <div className="liquid-glass rounded-3xl p-10 space-y-6 shadow-xl">
                         <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
                             <Icon name="hourglass_top" className="text-4xl text-white" />
                         </div>
-                        <h1 className="text-2xl font-black">Registration Submitted!</h1>
-                        <p className="text-slate-400 text-sm leading-relaxed">
-                            Your officer account has been created and is <span className="text-amber-400 font-bold">pending admin approval</span>. 
+                        <h1 className="text-2xl font-black text-slate-800">Registration Submitted!</h1>
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                            Your officer account has been created and is <span className="text-amber-600 font-bold">pending admin approval</span>. 
                             You will be able to log in once an admin reviews and approves your documents.
                         </p>
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-left">
-                            <p className="text-xs font-bold text-amber-400 mb-1">What happens next?</p>
-                            <ul className="text-xs text-slate-400 space-y-1">
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+                            <p className="text-xs font-bold text-amber-700 mb-1">What happens next?</p>
+                            <ul className="text-xs text-slate-600 space-y-1">
                                 <li>• Admin reviews your ID proof documents</li>
                                 <li>• Once approved, you can log in with your credentials</li>
                                 <li>• You'll be assigned to handle {issueCategory.replace('_', ' ')} issues in {city}</li>
@@ -148,34 +149,35 @@ export default function AuthPage() {
         );
     }
 
-    return (
-        <div className="relative min-h-screen flex items-center justify-center font-display bg-[#050816] text-white overflow-hidden px-4">
-            {/* Background orbs */}
-            <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-                <div className="absolute w-[500px] h-[500px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', top: '-150px', left: '-100px' }} />
-                <div className="absolute w-[400px] h-[400px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)', bottom: '-100px', right: '-100px' }} />
-            </div>
+    const inputClass = "w-full bg-slate-100/60 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-all";
+    const selectClass = "w-full bg-slate-100/60 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none";
 
-            <div className="relative z-10 w-full max-w-md">
+    return (
+        <div className="relative min-h-screen flex items-center justify-center font-display bg-[#f6f6f8] text-slate-900 overflow-hidden px-4">
+            {/* Background decorative blurs */}
+            <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
+            <div className="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] -z-10 pointer-events-none" />
+
+            <div className="relative z-10 w-full max-w-md py-12">
                 {/* Back to home */}
-                <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-white mb-6 transition-colors">
+                <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary mb-6 transition-colors">
                     <Icon name="arrow_back" className="text-lg" />
                     Back to Home
                 </Link>
 
                 <form
                     onSubmit={handleSubmit}
-                    className="bg-white/[0.04] border border-white/10 rounded-3xl p-8 sm:p-10 space-y-6 backdrop-blur-sm"
+                    className="liquid-glass rounded-3xl p-8 sm:p-10 space-y-6 shadow-xl"
                 >
                     {/* Logo */}
                     <div className="flex flex-col items-center gap-3 mb-2">
                         <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center rounded-2xl shadow-lg shadow-indigo-500/25">
                             <Icon name={mode === 'login' ? 'login' : 'person_add'} className="text-3xl text-white" />
                         </div>
-                        <h1 className="text-2xl font-black tracking-tight">
+                        <h1 className="text-2xl font-black tracking-tight text-slate-800">
                             {mode === 'login' ? 'Welcome Back' : 'Create Account'}
                         </h1>
-                        <p className="text-sm text-slate-400">
+                        <p className="text-sm text-slate-500">
                             {mode === 'login'
                                 ? 'Sign in to track your civic reports'
                                 : 'Join CivicLens to report and track issues'}
@@ -183,7 +185,7 @@ export default function AuthPage() {
                     </div>
 
                     {/* Mode Toggle */}
-                    <div className="flex rounded-xl bg-white/5 p-1 border border-white/5">
+                    <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
                         {['login', 'signup'].map((m) => (
                             <button
                                 key={m}
@@ -192,7 +194,7 @@ export default function AuthPage() {
                                 className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
                                     mode === m
                                         ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-md'
-                                        : 'text-slate-400 hover:text-white'
+                                        : 'text-slate-500 hover:text-slate-700'
                                 }`}
                             >
                                 {m === 'login' ? 'Sign In' : 'Sign Up'}
@@ -203,7 +205,7 @@ export default function AuthPage() {
                     {/* Role Selector (only in signup) */}
                     {mode === 'signup' && (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">I am a</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">I am a</label>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
                                     { value: 'citizen', icon: 'person', label: 'Citizen', desc: 'Report issues' },
@@ -215,13 +217,13 @@ export default function AuthPage() {
                                         onClick={() => setRole(r.value)}
                                         className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all ${
                                             role === r.value
-                                                ? 'border-indigo-500/50 bg-indigo-500/10 text-white'
-                                                : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-white/10'
+                                                ? 'border-primary bg-primary/5 text-slate-800 shadow-sm'
+                                                : 'border-slate-200 bg-white/50 text-slate-500 hover:border-slate-300'
                                         }`}
                                     >
-                                        <Icon name={r.icon} className={`text-2xl ${role === r.value ? 'text-indigo-400' : ''}`} />
+                                        <Icon name={r.icon} className={`text-2xl ${role === r.value ? 'text-primary' : ''}`} />
                                         <span className="text-sm font-bold">{r.label}</span>
-                                        <span className="text-[10px] text-slate-500">{r.desc}</span>
+                                        <span className="text-[10px] text-slate-400">{r.desc}</span>
                                     </button>
                                 ))}
                             </div>
@@ -231,14 +233,14 @@ export default function AuthPage() {
                     {/* Name (signup only) */}
                     {mode === 'signup' && (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name *</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Full Name *</label>
                             <div className="relative">
-                                <Icon name="person" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                                <Icon name="person" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                    className={inputClass}
                                     placeholder="John Doe"
                                     autoComplete="name"
                                 />
@@ -248,14 +250,14 @@ export default function AuthPage() {
 
                     {/* Email */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email *</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email *</label>
                         <div className="relative">
-                            <Icon name="mail" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                            <Icon name="mail" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                className={inputClass}
                                 placeholder="you@example.com"
                                 autoComplete="email"
                             />
@@ -264,14 +266,14 @@ export default function AuthPage() {
 
                     {/* Password */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Password *</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Password *</label>
                         <div className="relative">
-                            <Icon name="lock" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                            <Icon name="lock" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                className={inputClass}
                                 placeholder="••••••••"
                                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                             />
@@ -281,14 +283,14 @@ export default function AuthPage() {
                     {/* Phone (signup only) */}
                     {mode === 'signup' && (
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone <span className="text-slate-600">(optional)</span></label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phone <span className="text-slate-400">(optional)</span></label>
                             <div className="relative">
-                                <Icon name="call" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                                <Icon name="call" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
                                 <input
                                     type="tel"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                    className={inputClass}
                                     placeholder="+91 12345 67890"
                                 />
                             </div>
@@ -299,71 +301,71 @@ export default function AuthPage() {
                     {mode === 'signup' && role === 'officer' && (
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Department</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Department</label>
                                 <div className="relative">
-                                    <Icon name="apartment" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500" />
+                                    <Icon name="apartment" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" />
                                     <input
                                         type="text"
                                         value={department}
                                         onChange={(e) => setDepartment(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+                                        className={inputClass}
                                         placeholder="Municipal Corporation"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Working City *</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Working City *</label>
                                 <div className="relative">
-                                    <Icon name="location_on" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <Icon name="location_on" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400 pointer-events-none" />
                                     <select
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all appearance-none"
+                                        className={selectClass}
                                     >
-                                        <option value="" className="text-slate-900">Select City</option>
-                                        <option value="Mumbai" className="text-slate-900">Mumbai</option>
-                                        <option value="Navi Mumbai" className="text-slate-900">Navi Mumbai</option>
-                                        <option value="Panvel" className="text-slate-900">Panvel</option>
-                                        <option value="Vashi" className="text-slate-900">Vashi</option>
-                                        <option value="Wadala" className="text-slate-900">Wadala</option>
-                                        <option value="Chunabhatti" className="text-slate-900">Chunabhatti</option>
-                                        <option value="Thane" className="text-slate-900">Thane</option>
-                                        <option value="Kalyan" className="text-slate-900">Kalyan</option>
+                                        <option value="">Select City</option>
+                                        <option value="Mumbai">Mumbai</option>
+                                        <option value="Navi Mumbai">Navi Mumbai</option>
+                                        <option value="Panvel">Panvel</option>
+                                        <option value="Vashi">Vashi</option>
+                                        <option value="Wadala">Wadala</option>
+                                        <option value="Chunabhatti">Chunabhatti</option>
+                                        <option value="Thane">Thane</option>
+                                        <option value="Kalyan">Kalyan</option>
                                     </select>
-                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400 pointer-events-none" />
                                 </div>
                             </div>
 
                             {/* Issue Category */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Issue Domain *</label>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Issue Domain *</label>
                                 <div className="relative">
-                                    <Icon name="category" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <Icon name="category" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400 pointer-events-none" />
                                     <select
                                         value={issueCategory}
                                         onChange={(e) => setIssueCategory(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all appearance-none"
+                                        className={selectClass}
                                     >
-                                        <option value="" className="text-slate-900">Select your domain</option>
-                                        <option value="pothole" className="text-slate-900">Potholes / Road Damage</option>
-                                        <option value="garbage_dump" className="text-slate-900">Garbage / Sanitation</option>
-                                        <option value="waterlogging" className="text-slate-900">Waterlogging / Floods</option>
-                                        <option value="electrical_hazard" className="text-slate-900">Electrical Hazard</option>
-                                        <option value="blocked_drain" className="text-slate-900">Open/Blocked Drains</option>
+                                        <option value="">Select your domain</option>
+                                        <option value="pothole">Potholes / Road Damage</option>
+                                        <option value="garbage_dump">Garbage / Sanitation</option>
+                                        <option value="waterlogging">Waterlogging / Floods</option>
+                                        <option value="electrical_hazard">Electrical Hazard</option>
+                                        <option value="blocked_drain">Open/Blocked Drains</option>
                                     </select>
-                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-500 pointer-events-none" />
+                                    <Icon name="expand_more" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400 pointer-events-none" />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">ID Proof Image *</label>
-                                <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl p-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ID Proof Image *</label>
+                                <div className="relative flex items-center bg-slate-100/60 border border-slate-200 rounded-xl p-2">
                                     <input
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => setIdProof(e.target.files[0])}
-                                        className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/20 file:text-indigo-400 hover:file:bg-indigo-500/30 cursor-pointer"
+                                        className="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
                                     />
                                 </div>
                             </div>
@@ -392,14 +394,14 @@ export default function AuthPage() {
                         {mode === 'login' ? (
                             <>
                                 Don't have an account?{' '}
-                                <button type="button" onClick={() => setMode('signup')} className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
+                                <button type="button" onClick={() => setMode('signup')} className="text-primary font-semibold hover:text-primary/80 transition-colors">
                                     Sign Up
                                 </button>
                             </>
                         ) : (
                             <>
                                 Already have an account?{' '}
-                                <button type="button" onClick={() => setMode('login')} className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
+                                <button type="button" onClick={() => setMode('login')} className="text-primary font-semibold hover:text-primary/80 transition-colors">
                                     Sign In
                                 </button>
                             </>

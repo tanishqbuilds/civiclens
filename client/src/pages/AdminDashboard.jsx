@@ -130,8 +130,8 @@ function AdminDashboard() {
 
   // Jurisdiction-derived map props
   const jurisdiction = admin?.jurisdiction ?? null;
-  const mapCenter = jurisdiction ? jurisdiction.center : [78.9629, 20.5937];
-  const mapZoom = jurisdiction ? 11 : 4;
+  const mapCenter = jurisdiction ? jurisdiction.center : [72.8777, 19.076];
+  const mapZoom = jurisdiction ? 11 : 8;
 
   // Debounced bounds change handler
   const handleBoundsChange = useCallback((newBounds) => {
@@ -492,6 +492,7 @@ function AdminDashboard() {
         <div className="flex gap-6 border-b border-slate-200">
            <button onClick={() => setActiveTab('tickets')} className={`pb-3 font-bold text-sm transition-colors ${activeTab === 'tickets' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}>Tickets Dashboard</button>
            <button onClick={() => setActiveTab('users')} className={`pb-3 font-bold text-sm transition-colors ${activeTab === 'users' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}>User Management</button>
+           <button onClick={() => setActiveTab('analytics')} className={`pb-3 font-bold text-sm transition-colors flex items-center gap-1.5 ${activeTab === 'analytics' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}><Icon name="analytics" className="text-[18px]" />Analytics</button>
         </div>
 
         {activeTab === 'tickets' && (
@@ -914,6 +915,10 @@ function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsPanel tickets={tickets} users={users} />
+        )}
       </main>
 
       {/* ── Ticket Detail Modal ── */}
@@ -1332,6 +1337,537 @@ function TicketModal({ ticket, onClose, onStatusChange, isUpdating, users, onAss
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── AnalyticsPanel ──────────────────────────────────────────────────────────
+
+const ANALYTICS_CAT_COLORS = {
+  pothole: { bg: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50', hex: '#f97316' },
+  garbage_dump: { bg: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', hex: '#10b981' },
+  electrical_hazard: { bg: 'bg-yellow-500', text: 'text-yellow-600', light: 'bg-yellow-50', hex: '#eab308' },
+  waterlogging: { bg: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', hex: '#3b82f6' },
+  blocked_drain: { bg: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50', hex: '#a855f7' },
+  clean_street: { bg: 'bg-teal-500', text: 'text-teal-600', light: 'bg-teal-50', hex: '#14b8a6' },
+  unclassified: { bg: 'bg-slate-400', text: 'text-slate-500', light: 'bg-slate-50', hex: '#94a3b8' },
+};
+
+const ANALYTICS_CAT_LABEL = {
+  pothole: 'Pothole',
+  garbage_dump: 'Garbage Dump',
+  electrical_hazard: 'Electrical Hazard',
+  waterlogging: 'Waterlogging',
+  blocked_drain: 'Blocked Drain',
+  clean_street: 'Clean Street',
+  unclassified: 'Unclassified',
+};
+
+function AnalyticsPanel({ tickets, users }) {
+  // ── City-wise Complaints ──
+  const cityData = useMemo(() => {
+    const map = {};
+    tickets.forEach((t) => {
+      const city = t.city || 'Unknown';
+      map[city] = (map[city] || 0) + 1;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+  }, [tickets]);
+
+  const maxCityCount = cityData.length > 0 ? cityData[0][1] : 1;
+
+  // ── Category Breakdown ──
+  const categoryData = useMemo(() => {
+    const map = {};
+    tickets.forEach((t) => {
+      const cat = t.aiCategory || 'unclassified';
+      map[cat] = (map[cat] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [tickets]);
+
+  // ── Officer Leaderboard ──
+  const officerLeaderboard = useMemo(() => {
+    const resolvedByOfficer = {};
+    const assignedByOfficer = {};
+    tickets.forEach((t) => {
+      if (t.assignedTo) {
+        const name = t.assignedOfficerName || t.assignedTo;
+        assignedByOfficer[name] = (assignedByOfficer[name] || 0) + 1;
+        if (t.status === 'resolved') {
+          resolvedByOfficer[name] = (resolvedByOfficer[name] || 0) + 1;
+        }
+      }
+    });
+    return Object.entries(assignedByOfficer)
+      .map(([name, assigned]) => ({
+        name,
+        assigned,
+        resolved: resolvedByOfficer[name] || 0,
+        rate: assigned > 0 ? Math.round(((resolvedByOfficer[name] || 0) / assigned) * 100) : 0,
+      }))
+      .sort((a, b) => b.resolved - a.resolved)
+      .slice(0, 8);
+  }, [tickets]);
+
+  // ── Severity Distribution across cities ──
+  const citySeverity = useMemo(() => {
+    const map = {};
+    tickets.forEach((t) => {
+      const city = t.city || 'Unknown';
+      if (!map[city]) map[city] = { sum: 0, count: 0, critical: 0 };
+      map[city].sum += t.severityScore || 0;
+      map[city].count++;
+      if (t.severityScore >= 8) map[city].critical++;
+    });
+    return Object.entries(map)
+      .map(([city, d]) => ({
+        city,
+        avg: d.count > 0 ? Math.round((d.sum / d.count) * 10) / 10 : 0,
+        critical: d.critical,
+        total: d.count,
+      }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 8);
+  }, [tickets]);
+
+  // ── Overall Resolution Stats ──
+  const resolutionStats = useMemo(() => {
+    const total = tickets.length;
+    const resolved = tickets.filter((t) => t.status === 'resolved').length;
+    const inProgress = tickets.filter((t) => t.status === 'in_progress').length;
+    const open = tickets.filter((t) => t.status === 'open').length;
+    const avgSeverity = total > 0
+      ? Math.round((tickets.reduce((s, t) => s + (t.severityScore || 0), 0) / total) * 10) / 10
+      : 0;
+    const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    const citizenCount = users.filter((u) => u.role === 'citizen').length;
+    const officerCount = users.filter((u) => u.role === 'officer' && u.status === 'approved').length;
+    return { total, resolved, inProgress, open, avgSeverity, resolutionRate, citizenCount, officerCount };
+  }, [tickets, users]);
+
+  // ── 7-Day Trend ──
+  const weeklyTrend = useMemo(() => {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      days.push(d);
+    }
+    return days.map((day) => {
+      const next = new Date(day);
+      next.setDate(next.getDate() + 1);
+      const count = tickets.filter((t) => {
+        const created = new Date(t.createdAt);
+        return created >= day && created < next;
+      }).length;
+      return {
+        label: day.toLocaleDateString(undefined, { weekday: 'short' }),
+        date: day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        count,
+      };
+    });
+  }, [tickets]);
+
+  const maxTrendCount = Math.max(1, ...weeklyTrend.map((d) => d.count));
+
+  // ── City-wise Status Breakdown ──
+  const cityStatusBreakdown = useMemo(() => {
+    const map = {};
+    tickets.forEach((t) => {
+      const city = t.city || 'Unknown';
+      if (!map[city]) map[city] = { open: 0, in_progress: 0, resolved: 0, total: 0 };
+      map[city].total++;
+      if (t.status in map[city]) map[city][t.status]++;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 6);
+  }, [tickets]);
+
+  // Donut chart styles for category breakdown
+  const totalForDonut = tickets.length || 1;
+  const donutSegments = useMemo(() => {
+    let accum = 0;
+    return categoryData.map(([cat, count]) => {
+      const pct = (count / totalForDonut) * 100;
+      const start = accum;
+      accum += pct;
+      return { cat, count, pct, start, color: ANALYTICS_CAT_COLORS[cat]?.hex || '#94a3b8' };
+    });
+  }, [categoryData, totalForDonut]);
+
+  const conicGradient = donutSegments.length > 0
+    ? donutSegments.map((s) => `${s.color} ${s.start}% ${s.start + s.pct}%`).join(', ')
+    : '#e2e8f0 0% 100%';
+
+  return (
+    <div className="space-y-6">
+      {/* ── Row 1: Key Metrics ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MiniMetricCard icon="description" label="Total Complaints" value={resolutionStats.total} color="bg-primary/10 text-primary" />
+        <MiniMetricCard icon="check_circle" label="Resolution Rate" value={`${resolutionStats.resolutionRate}%`} color="bg-emerald-50 text-emerald-600" />
+        <MiniMetricCard icon="groups" label="Active Citizens" value={resolutionStats.citizenCount} color="bg-blue-50 text-blue-600" />
+        <MiniMetricCard icon="shield_person" label="Active Officers" value={resolutionStats.officerCount} color="bg-indigo-50 text-indigo-600" />
+      </div>
+
+      {/* ── Row 2: City-wise Complaints + Category Donut ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* City-wise Complaints */}
+        <div className="lg:col-span-7 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon name="location_city" className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">City-wise Complaints</h3>
+              <p className="text-[10px] text-slate-400">Complaint volume by city</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-3">
+            {cityData.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-8">No data available</p>
+            ) : (
+              cityData.map(([city, count], i) => (
+                <div key={city} className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</span>
+                      <span className="text-sm font-semibold text-slate-700">{city}</span>
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">{count}</span>
+                  </div>
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${Math.round((count / maxCityCount) * 100)}%`,
+                        background: `linear-gradient(90deg, #6366f1 0%, #818cf8 ${Math.round((count / maxCityCount) * 100)}%)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Category Donut */}
+        <div className="lg:col-span-5 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-50">
+              <Icon name="donut_large" className="text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Category Breakdown</h3>
+              <p className="text-[10px] text-slate-400">Issue types distribution</p>
+            </div>
+          </div>
+          <div className="p-5 flex flex-col items-center gap-5">
+            {/* CSS Donut */}
+            <div className="relative w-44 h-44">
+              <div
+                className="w-full h-full rounded-full"
+                style={{
+                  background: `conic-gradient(${conicGradient})`,
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-[#f6f6f8] flex flex-col items-center justify-center shadow-inner">
+                  <span className="text-2xl font-bold text-slate-800">{tickets.length}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Total</span>
+                </div>
+              </div>
+            </div>
+            {/* Legend */}
+            <div className="w-full grid grid-cols-2 gap-x-4 gap-y-2">
+              {donutSegments.map((s) => (
+                <div key={s.cat} className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                  <span className="text-xs text-slate-600 truncate">{ANALYTICS_CAT_LABEL[s.cat] || s.cat}</span>
+                  <span className="text-xs font-bold text-slate-800 ml-auto">{s.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Row 3: Weekly Trend + Resolution Gauge ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Weekly Trend */}
+        <div className="lg:col-span-8 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-50">
+              <Icon name="trending_up" className="text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">7-Day Trend</h3>
+              <p className="text-[10px] text-slate-400">New complaints over the last week</p>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="flex items-end justify-between gap-2 h-44">
+              {weeklyTrend.map((d, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                  <span className="text-xs font-bold text-slate-700">{d.count}</span>
+                  <div className="w-full max-w-[48px] relative group">
+                    <div
+                      className="w-full rounded-t-lg transition-all duration-500 ease-out relative"
+                      style={{
+                        height: `${Math.max(8, (d.count / maxTrendCount) * 120)}px`,
+                        background: i === weeklyTrend.length - 1
+                          ? 'linear-gradient(180deg, #6366f1 0%, #818cf8 100%)'
+                          : 'linear-gradient(180deg, #c7d2fe 0%, #e0e7ff 100%)',
+                      }}
+                    >
+                      <div className="absolute inset-0 rounded-t-lg bg-white/0 group-hover:bg-white/20 transition-colors" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-slate-500">{d.label}</p>
+                    <p className="text-[9px] text-slate-400">{d.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Resolution & Severity Gauge */}
+        <div className="lg:col-span-4 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50">
+              <Icon name="speed" className="text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Performance</h3>
+              <p className="text-[10px] text-slate-400">Resolution & severity metrics</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-6">
+            {/* Resolution Rate Gauge */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative w-32 h-16 overflow-hidden">
+                <div className="absolute inset-0 rounded-t-full border-[10px] border-slate-100" style={{ borderBottom: 'none' }} />
+                <div
+                  className="absolute inset-0 rounded-t-full border-[10px] border-transparent transition-all duration-700"
+                  style={{
+                    borderTopColor: resolutionStats.resolutionRate >= 70 ? '#10b981' : resolutionStats.resolutionRate >= 40 ? '#f59e0b' : '#ef4444',
+                    borderLeftColor: resolutionStats.resolutionRate >= 50 ? (resolutionStats.resolutionRate >= 70 ? '#10b981' : '#f59e0b') : 'transparent',
+                    borderRightColor: resolutionStats.resolutionRate >= 50 ? (resolutionStats.resolutionRate >= 70 ? '#10b981' : '#f59e0b') : (resolutionStats.resolutionRate >= 25 ? (resolutionStats.resolutionRate >= 70 ? '#10b981' : '#f59e0b') : 'transparent'),
+                    borderBottom: 'none',
+                    transform: `rotate(${Math.min(180, resolutionStats.resolutionRate * 1.8)}deg)`,
+                    transformOrigin: 'bottom center',
+                  }}
+                />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+                  <span className="text-xl font-bold text-slate-800">{resolutionStats.resolutionRate}%</span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Resolution Rate</span>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-slate-800">{resolutionStats.avgSeverity}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Avg Severity</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-amber-600">{resolutionStats.open}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Open Issues</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-blue-600">{resolutionStats.inProgress}</p>
+                <p className="text-[10px] text-slate-500 font-medium">In Progress</p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-emerald-600">{resolutionStats.resolved}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Resolved</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Row 4: Officer Leaderboard + City Severity ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Officer Leaderboard */}
+        <div className="lg:col-span-7 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-indigo-50">
+              <Icon name="military_tech" className="text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">Officer Contribution</h3>
+              <p className="text-[10px] text-slate-400">Top officers by resolved complaints</p>
+            </div>
+          </div>
+          {officerLeaderboard.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-400">
+              <Icon name="person_off" className="text-4xl text-slate-300 mb-2" />
+              <p>No officer assignments yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {officerLeaderboard.map((officer, i) => (
+                <div key={officer.name} className="flex items-center gap-4 px-5 py-4 hover:bg-primary/5 transition-colors">
+                  {/* Rank */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    i === 0 ? 'bg-amber-100 text-amber-700' :
+                    i === 1 ? 'bg-slate-200 text-slate-600' :
+                    i === 2 ? 'bg-orange-100 text-orange-700' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    {i <= 2 ? ['🥇', '🥈', '🥉'][i] : i + 1}
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">{officer.name}</p>
+                    <p className="text-[10px] text-slate-400">{officer.assigned} assigned • {officer.resolved} resolved</p>
+                  </div>
+                  {/* Resolution Rate Bar */}
+                  <div className="w-24 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold text-slate-500">{officer.rate}%</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${officer.rate}%`,
+                          background: officer.rate >= 70 ? '#10b981' : officer.rate >= 40 ? '#f59e0b' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {/* Resolved Count */}
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <span className="text-sm font-bold text-emerald-600">{officer.resolved}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* City Severity Heatmap */}
+        <div className="lg:col-span-5 liquid-glass rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-rose-50">
+              <Icon name="local_fire_department" className="text-rose-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">City Severity Index</h3>
+              <p className="text-[10px] text-slate-400">Average severity & critical issues by city</p>
+            </div>
+          </div>
+          {citySeverity.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-400">No data available</div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {citySeverity.map((item) => (
+                <div key={item.city} className="px-5 py-4 flex items-center gap-4 hover:bg-rose-50/30 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-700 truncate">{item.city}</p>
+                    <p className="text-[10px] text-slate-400">{item.total} complaints</p>
+                  </div>
+                  {/* Severity Indicator */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {item.critical > 0 && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">
+                        <Icon name="warning" className="text-[12px]" />{item.critical} critical
+                      </span>
+                    )}
+                    <div className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+                      item.avg >= 7 ? 'bg-rose-100 text-rose-700' :
+                      item.avg >= 5 ? 'bg-amber-100 text-amber-700' :
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {item.avg}/10
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Row 5: City Status Breakdown ── */}
+      <div className="liquid-glass rounded-xl overflow-hidden">
+        <div className="p-5 border-b border-slate-200/50 bg-white/10 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-violet-50">
+            <Icon name="stacked_bar_chart" className="text-violet-600" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm">City-wise Status Breakdown</h3>
+            <p className="text-[10px] text-slate-400">Open, In-progress, and Resolved distribution per city</p>
+          </div>
+        </div>
+        <div className="p-5">
+          {cityStatusBreakdown.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-6">No data available</p>
+          ) : (
+            <div className="space-y-4">
+              {cityStatusBreakdown.map(([city, data]) => (
+                <div key={city}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-slate-700">{city}</span>
+                    <span className="text-xs text-slate-400">{data.total} total</span>
+                  </div>
+                  <div className="flex h-3 rounded-full overflow-hidden bg-slate-100">
+                    {data.resolved > 0 && (
+                      <div
+                        className="bg-emerald-400 transition-all duration-500"
+                        style={{ width: `${(data.resolved / data.total) * 100}%` }}
+                        title={`Resolved: ${data.resolved}`}
+                      />
+                    )}
+                    {data.in_progress > 0 && (
+                      <div
+                        className="bg-blue-400 transition-all duration-500"
+                        style={{ width: `${(data.in_progress / data.total) * 100}%` }}
+                        title={`In Progress: ${data.in_progress}`}
+                      />
+                    )}
+                    {data.open > 0 && (
+                      <div
+                        className="bg-amber-400 transition-all duration-500"
+                        style={{ width: `${(data.open / data.total) * 100}%` }}
+                        title={`Open: ${data.open}`}
+                      />
+                    )}
+                  </div>
+                  <div className="flex gap-4 mt-1.5">
+                    <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{data.resolved} resolved</span>
+                    <span className="text-[10px] text-blue-600 font-medium flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400" />{data.in_progress} in progress</span>
+                    <span className="text-[10px] text-amber-600 font-medium flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{data.open} open</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniMetricCard({ icon, label, value, color }) {
+  return (
+    <div className="liquid-glass rounded-xl p-4 flex items-center gap-4 hover:shadow-lg transition-shadow">
+      <div className={`p-2.5 rounded-lg ${color}`}>
+        <Icon name={icon} />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+        <p className="text-xl font-bold text-slate-800">{value}</p>
       </div>
     </div>
   );

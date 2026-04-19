@@ -7,7 +7,7 @@
  * ✅ Login / Signup navigation
  * ✅ Features showcase with icons
  * ✅ Live stats counter (animated on scroll)
- * ✅ Liquid glass design system
+ * ✅ Liquid glass light theme (matches all pages)
  * ✅ Responsive & mobile-first
  */
 import { useState, useEffect, useRef } from 'react';
@@ -115,14 +115,14 @@ export default function LandingPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-slate-50 font-display text-slate-900 overflow-x-hidden">
+        <div className="min-h-screen bg-[#f6f6f8] font-display text-slate-900 overflow-x-hidden">
 
             {/* ── Ambient Gradient Orbs ── */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
                 <div
                     className="absolute w-[600px] h-[600px] rounded-full"
                     style={{
-                        background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+                        background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
                         top: '-200px',
                         left: '-150px',
                         transform: `translateY(${scrollY * 0.08}px)`,
@@ -131,7 +131,7 @@ export default function LandingPage() {
                 <div
                     className="absolute w-[500px] h-[500px] rounded-full"
                     style={{
-                        background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)',
+                        background: 'radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%)',
                         top: '30%',
                         right: '-200px',
                         transform: `translateY(${scrollY * -0.05}px)`,
@@ -140,7 +140,7 @@ export default function LandingPage() {
                 <div
                     className="absolute w-[400px] h-[400px] rounded-full"
                     style={{
-                        background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)',
+                        background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)',
                         bottom: '100px',
                         left: '10%',
                         transform: `translateY(${scrollY * 0.06}px)`,
@@ -148,34 +148,25 @@ export default function LandingPage() {
                 />
             </div>
 
-            {/* ── Grid pattern overlay ── */}
-            <div
-                className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]"
-                style={{
-                    backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                                     linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-                    backgroundSize: '60px 60px',
-                }}
-                aria-hidden="true"
-            />
-
             {/* ── Navigation ── */}
-            <nav className="relative z-50 w-full border-b border-slate-200 bg-slate-1000 backdrop-blur-md">
+            <nav className="relative z-50 w-full border-b border-slate-200/60">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
-                    <Link to={isUserAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
-                        <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl w-9 h-9 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/40 transition-shadow">
-                            <Icon name="location_city" className="text-xl" />
-                        </div>
-                        <span className="text-xl font-black tracking-tight">
-                            Civic<span className="text-indigo-600">Lens</span>
-                        </span>
-                    </Link>
+                    <div className="liquid-glass rounded-xl px-4 py-2 flex items-center gap-6">
+                        <Link to={isUserAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
+                            <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl w-9 h-9 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/40 transition-shadow">
+                                <Icon name="location_city" className="text-xl" />
+                            </div>
+                            <span className="text-xl font-black tracking-tight">
+                                Civic<span className="text-indigo-600">Lens</span>
+                            </span>
+                        </Link>
+                    </div>
 
-                    <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {isUserAuthenticated ? (
                             <Link
                                 to="/dashboard"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-indigo-300 hover:text-indigo-600 hover:bg-white/5 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
                             >
                                 <Icon name="dashboard" className="text-lg" />
                                 My Dashboard
@@ -183,7 +174,7 @@ export default function LandingPage() {
                         ) : (
                             <Link
                                 to="/auth"
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-white hover:bg-white/5 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 transition-all"
                                 id="nav-login-btn"
                             >
                                 <Icon name="login" className="text-lg" />
@@ -216,7 +207,7 @@ export default function LandingPage() {
                         <span className="relative inline-block">
                             <span
                                 key={heroIdx}
-                                className="bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent animate-hero-fade"
+                                className="bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent animate-hero-fade"
                             >
                                 {HERO_WORDS[heroIdx]}
                             </span>
@@ -227,7 +218,7 @@ export default function LandingPage() {
                     </h1>
 
                     {/* Subtitle */}
-                    <p className="text-lg sm:text-xl text-slate-600 mt-6 max-w-xl mx-auto leading-relaxed landing-fade-up" style={{ animationDelay: '0.2s' }}>
+                    <p className="text-lg sm:text-xl text-slate-500 mt-6 max-w-xl mx-auto leading-relaxed landing-fade-up" style={{ animationDelay: '0.2s' }}>
                         Snap a photo. Drop a pin. AI handles the rest —
                         categorizing, prioritizing, and routing civic issues to the right authorities.
                     </p>
@@ -247,79 +238,63 @@ export default function LandingPage() {
                         </button>
                         <Link
                             to="/auth"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 liquid-glass shadow-sm hover:shadow-md hover:text-primary transition-all"
                             id="hero-login-btn"
                         >
                             <Icon name="shield_person" className="text-xl" />
                             Officer Login
                         </Link>
                     </div>
-
-                    {/* Trust indicators */}
-                    {/* <div className="flex items-center justify-center gap-6 mt-12 text-xs text-slate-600 landing-fade-up" style={{ animationDelay: '0.5s' }}>
-                        <div className="flex items-center gap-1.5">
-                            <Icon name="lock" className="text-sm text-slate-600" />
-                            No login required to report
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1.5">
-                            <Icon name="bolt" className="text-sm text-slate-600" />
-                            30-second submission
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1.5">
-                            <Icon name="verified" className="text-sm text-slate-600" />
-                            AI-verified
-                        </div>
-                    </div> */}
                 </div>
 
                 {/* Hero visual — Floating glass card mockup */}
                 <div className="relative mt-16 sm:mt-20 max-w-4xl mx-auto landing-fade-up" style={{ animationDelay: '0.55s' }}>
-                    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white shadow-xl shadow-indigo-900/5 p-1">
-                        <div className="rounded-[20px] bg-white pb-6 pt-6 pl-10 pr-10 border border-slate-100 p-6 sm:p-10">
+                    <div className="relative rounded-3xl overflow-hidden liquid-glass shadow-xl p-1">
+                        <div className="rounded-[20px] bg-white/60 pb-6 pt-6 pl-10 pr-10 border border-slate-100/50 p-6 sm:p-10">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                                <div className="w-3 h-3 rounded-full bg-amber-500/60" />
-                                <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
-                                <span className="ml-3 text-xs text-slate-600 font-mono">CivicLens Dashboard</span>
+                                <div className="w-3 h-3 rounded-full bg-red-400" />
+                                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                                <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                                <span className="ml-3 text-xs text-slate-500 font-mono">CivicLens Dashboard</span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {[
-                                    { label: 'Open Issues', val: '74', color: 'text-red-400', icon: 'error' },
-                                    { label: 'In Progress', val: '31', color: 'text-amber-400', icon: 'pending' },
-                                    { label: 'Resolved', val: '23', color: 'text-emerald-400', icon: 'check_circle' },
-                                    { label: 'Avg Severity', val: '6.4', color: 'text-blue-400', icon: 'speed' },
+                                    { label: 'Open Issues', val: '74', color: 'text-red-500', icon: 'error' },
+                                    { label: 'In Progress', val: '31', color: 'text-amber-500', icon: 'pending' },
+                                    { label: 'Resolved', val: '23', color: 'text-emerald-500', icon: 'check_circle' },
+                                    { label: 'Avg Severity', val: '6.4', color: 'text-blue-500', icon: 'speed' },
                                 ].map((s) => (
-                                    <div key={s.label} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                                    <div key={s.label} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Icon name={s.icon} className={`text-lg ${s.color}`} />
-                                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold">{s.label}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{s.label}</span>
                                         </div>
                                         <span className={`text-2xl font-black ${s.color}`}>{s.val}</span>
                                     </div>
                                 ))}
                             </div>
                             {/* Fake heatmap bar */}
-                            <div className="mt-6 h-3 rounded-full bg-white/5 overflow-hidden">
-                                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-500/60 to-red-500/60" style={{ width: '72%' }} />
+                            <div className="mt-6 h-3 rounded-full bg-slate-100 overflow-hidden">
+                                <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-red-400" style={{ width: '72%' }} />
                             </div>
-                            <div className="flex justify-between mt-2 text-[10px] text-slate-600 font-mono">
+                            <div className="flex justify-between mt-2 text-[10px] text-slate-500 font-mono">
                                 <span>Low Severity</span>
                                 <span>High Severity</span>
                             </div>
                         </div>
                     </div>
                     {/* Glow below card */}
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-2/3 h-24 bg-indigo-500/10 blur-3xl rounded-full" aria-hidden="true" />
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-2/3 h-24 bg-indigo-500/8 blur-3xl rounded-full" aria-hidden="true" />
                 </div>
             </section>
 
             {/* ── How It Works ── */}
-            <section className="relative z-10 py-24 border-t border-slate-200">
+            <section className="relative z-10 py-24 border-t border-slate-200/60">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8">
                     <div className="text-center mb-16">
-                        <p className="text-xs font-black uppercase tracking-[0.25em] text-indigo-400 mb-3">How It Works</p>
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary mb-3">How It Works</p>
                         <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-                            Three Steps to a <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Safer City</span>
+                            Three Steps to a <span className="bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">Safer City</span>
                         </h2>
                     </div>
 
@@ -330,17 +305,17 @@ export default function LandingPage() {
                             { step: '03', icon: 'engineering', title: 'Resolution', desc: 'Officers are dispatched based on priority heatmaps' },
                         ].map((s, i) => (
                             <div key={s.step} className="relative group">
-                                <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-8 hover:bg-white shadow-md border-slate-300 transition-all duration-300">
+                                <div className="liquid-glass rounded-2xl p-8 hover:shadow-lg transition-all duration-300">
                                     <div className="text-[60px] font-black text-slate-100 absolute top-4 right-6 select-none">{s.step}</div>
                                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border border-indigo-500/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                                        <Icon name={s.icon} className="text-2xl text-indigo-400" />
+                                        <Icon name={s.icon} className="text-2xl text-primary" />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-2">{s.title}</h3>
-                                    <p className="text-sm text-slate-600 leading-relaxed">{s.desc}</p>
+                                    <h3 className="text-xl font-bold mb-2 text-slate-800">{s.title}</h3>
+                                    <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
                                 </div>
                                 {i < 2 && (
                                     <div className="hidden sm:block absolute top-1/2 -right-4 z-10">
-                                        <Icon name="arrow_forward" className="text-xl text-white/10" />
+                                        <Icon name="arrow_forward" className="text-xl text-slate-300" />
                                     </div>
                                 )}
                             </div>
@@ -353,23 +328,20 @@ export default function LandingPage() {
             <section className="relative z-10 py-24">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8">
                     <div className="text-center mb-16">
-                        <p className="text-xs font-black uppercase tracking-[0.25em] text-indigo-400 mb-3">Platform Features</p>
-                        {/* <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-                            Built for <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Impact</span>
-                        </h2> */}
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary mb-3">Platform Features</p>
                     </div>
 
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {FEATURES.map((f) => (
                             <div
                                 key={f.title}
-                                className="group bg-white border border-slate-200 shadow-sm rounded-2xl p-6 hover:bg-white shadow-md border-slate-300 hover:-translate-y-1 transition-all duration-300"
+                                className="group liquid-glass rounded-2xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                             >
                                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
                                     <Icon name={f.icon} className="text-xl text-white" />
                                 </div>
-                                <h3 className="text-lg font-bold mb-2">{f.title}</h3>
-                                <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
+                                <h3 className="text-lg font-bold mb-2 text-slate-800">{f.title}</h3>
+                                <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -377,15 +349,15 @@ export default function LandingPage() {
             </section>
 
             {/* ── Stats ── */}
-            <section ref={statsRef} className="relative z-10 py-20 border-t border-b border-slate-200">
+            <section ref={statsRef} className="relative z-10 py-20 border-t border-b border-slate-200/60">
                 <div className="max-w-5xl mx-auto px-5 sm:px-8">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                         {STATS.map((s) => (
                             <div key={s.label}>
-                                <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                                <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
                                     <AnimatedCounter target={s.value} suffix={s.suffix} inView={statsInView} />
                                 </div>
-                                <p className="text-sm text-slate-600 mt-2 font-medium">{s.label}</p>
+                                <p className="text-sm text-slate-500 mt-2 font-medium">{s.label}</p>
                             </div>
                         ))}
                     </div>
@@ -397,9 +369,9 @@ export default function LandingPage() {
                 <div className="max-w-3xl mx-auto px-5 sm:px-8 text-center">
                     <h2 className="text-3xl sm:text-5xl font-black tracking-tight mb-6">
                         Ready to Make Your City <br />
-                        <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">Safer & Smarter?</span>
+                        <span className="bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">Safer & Smarter?</span>
                     </h2>
-                    <p className="text-lg text-slate-400 mb-10 max-w-lg mx-auto">
+                    <p className="text-lg text-slate-500 mb-10 max-w-lg mx-auto">
                         No account needed. Just snap, report, and let AI do the heavy lifting.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -414,7 +386,7 @@ export default function LandingPage() {
                         </button>
                         <Link
                             to="/auth?mode=signup"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-slate-700 liquid-glass shadow-sm hover:shadow-md hover:text-primary transition-all"
                             id="cta-signup-btn"
                         >
                             Create Account
@@ -424,21 +396,18 @@ export default function LandingPage() {
             </section>
 
             {/* ── Footer ── */}
-            <footer className="relative z-10 border-t border-slate-200 py-10">
+            <footer className="relative z-10 border-t border-slate-200/60 py-10">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <div className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-lg w-7 h-7 flex items-center justify-center">
                             <Icon name="location_city" className="text-sm" />
                         </div>
-                        <span className="text-sm font-bold text-slate-400">CivicLens</span>
+                        <span className="text-sm font-bold text-slate-500">CivicLens</span>
                     </div>
-                    {/* <p className="text-xs text-slate-600">
-                        Built for HackOverflow 2026 · SIH25031 — Govt. of Jharkhand
-                    </p> */}
-                    <div className="flex items-center gap-4 text-sm text-slate-600">
-                        <Link to="/auth" className="hover:text-white transition-colors">Login</Link>
-                        <Link to="/auth?mode=signup" className="hover:text-white transition-colors">Sign Up</Link>
-                        <Link to="/admin/login" className="hover:text-white transition-colors">Admin</Link>
+                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                        <Link to="/auth" className="hover:text-primary transition-colors">Login</Link>
+                        <Link to="/auth?mode=signup" className="hover:text-primary transition-colors">Sign Up</Link>
+                        <Link to="/admin/login" className="hover:text-primary transition-colors">Admin</Link>
                     </div>
                 </div>
             </footer>
