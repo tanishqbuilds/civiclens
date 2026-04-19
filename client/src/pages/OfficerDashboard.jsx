@@ -21,9 +21,13 @@ function Icon({ name, className = "" }) {
 
 const CAT_LABEL = {
   pothole: "Pothole",
+  garbage_dump: "Garbage Dump",
   garbage: "Garbage Dump",
+  electrical_hazard: "Electrical Hazard",
   broken_streetlight: "Broken Streetlight",
   waterlogging: "Waterlogging",
+  blocked_drain: "Blocked Drain",
+  clean_street: "Clean Street",
   other: "Other Issue",
   unclassified: "Unclassified",
 };

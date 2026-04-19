@@ -19,14 +19,62 @@ LABEL_MAPPING = {
 }
 ai_descriptions = list(LABEL_MAPPING.keys())
 
-# Define severity levels for the AI to choose from
-SEVERITY_PROMPTS = [
+# Category-specific severity prompts — gives CLIP concrete visual cues per category
+CATEGORY_SEVERITY_PROMPTS = {
+    "pothole": [
+        "a small shallow crack on the road",
+        "a noticeable pothole on the road",
+        "a large deep pothole damaging the road",
+        "a massive dangerous road crater",
+        "a completely destroyed road with huge craters"
+    ],
+    "garbage_dump": [
+        "a few pieces of small litter on the ground",
+        "a small pile of garbage on the sidewalk",
+        "a large pile of garbage overflowing from bins",
+        "a massive garbage dump blocking the street",
+        "an enormous hazardous waste dump covering the area"
+    ],
+    "waterlogging": [
+        "a small puddle on the street",
+        "ankle-deep water flooding part of a road",
+        "knee-deep water flooding the entire road",
+        "waist-deep flood water submerging vehicles",
+        "a completely flooded area with dangerous water levels"
+    ],
+    "electrical_hazard": [
+        "slightly sagging overhead electrical cables",
+        "a broken street light pole",
+        "dangerously hanging electrical wires near the ground",
+        "sparking exposed electrical wires on the street",
+        "a fallen electric utility pole with live wires on the road"
+    ],
+    "blocked_drain": [
+        "a slightly clogged storm drain with some debris",
+        "a blocked drain with dirty water pooling around it",
+        "an overflowing drain with sewage seeping out",
+        "a severely blocked drain causing street-level sewage flooding",
+        "a burst sewage pipe with raw sewage flooding the street"
+    ],
+    "clean_street": [
+        "a well-maintained clean street",
+        "a clean street with minor litter",
+        "a street with some visible issues",
+        "a street with multiple maintenance issues",
+        "a neglected street in poor condition"
+    ]
+}
+
+# Fallback for unclassified categories
+DEFAULT_SEVERITY_PROMPTS = [
     "a tiny, barely visible, or negligible issue",
     "a minor civic issue with small local impact",
     "a significant and clearly visible civic problem",
     "a severe, dangerous, or high-risk infrastructure failure",
     "a catastrophic, life-threatening metropolitan emergency"
 ]
+
+SEVERITY_SCORES = [2, 4, 6, 8, 10]
 
 
 @app.route('/health', methods=['GET'])
@@ -51,19 +99,24 @@ def classify_image():
     final_category = LABEL_MAPPING[top_cat['label']]
     confidence = top_cat['score']
 
-    # 2. Identify Severity (Zero-shot against severity prompts)
-    sev_preds = classifier(img, candidate_labels=SEVERITY_PROMPTS)
-    top_sev_label = sev_preds[0]['label']
+    # 2. Identify Severity using category-specific prompts
+    severity_prompts = CATEGORY_SEVERITY_PROMPTS.get(final_category, DEFAULT_SEVERITY_PROMPTS)
+    sev_preds = classifier(img, candidate_labels=severity_prompts)
     
-    # Map the text label to a numeric score out of 10
-    severity_map = {
-        SEVERITY_PROMPTS[0]: 2,
-        SEVERITY_PROMPTS[1]: 4,
-        SEVERITY_PROMPTS[2]: 6,
-        SEVERITY_PROMPTS[3]: 8,
-        SEVERITY_PROMPTS[4]: 10
-    }
-    severity_score = severity_map[top_sev_label]
+    # Build a confidence-weighted severity score across all levels
+    # instead of just picking the top one (gives better granularity)
+    score_map = {prompt: score for prompt, score in zip(severity_prompts, SEVERITY_SCORES)}
+    weighted_score = 0.0
+    total_weight = 0.0
+    for pred in sev_preds:
+        s = score_map[pred['label']]
+        w = pred['score']
+        weighted_score += s * w
+        total_weight += w
+    
+    severity_score = round(weighted_score / total_weight) if total_weight > 0 else 5
+    # Clamp to valid range
+    severity_score = max(1, min(10, severity_score))
 
     return jsonify({
         "success": True,
