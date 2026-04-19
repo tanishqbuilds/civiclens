@@ -2,7 +2,7 @@ const express = require('express');
 const ticketsController = require('../controllers/ticketsController');
 const { upload } = require('../config/multer');
 const { validatePostTicket, validatePatchTicket } = require('../middleware/validate');
-const { verifyToken, optionalUserToken, verifyUserToken } = require('../middleware/auth');
+const { verifyToken, optionalUserToken, verifyUserToken, verifyAnyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ router.get('/tickets/my', verifyUserToken, ticketsController.getMyTickets);
 router.get('/tickets', ticketsController.getTickets);
 router.get('/tickets/:id', ticketsController.getTicketById);
 router.post('/tickets', upload.single('photo'), optionalUserToken, validatePostTicket, ticketsController.postTicket);
-router.patch('/tickets/:id', verifyToken, validatePatchTicket, ticketsController.patchTicketStatus);
+router.patch('/tickets/:id', verifyAnyToken, validatePatchTicket, ticketsController.patchTicketStatus);
 router.patch('/tickets/:id/assign', verifyToken, ticketsController.assignOfficer);
 
 // Live updates on tickets

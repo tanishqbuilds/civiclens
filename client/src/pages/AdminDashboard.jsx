@@ -21,18 +21,26 @@ import { debugLog } from "../utils/debug";
 
 const CAT_LABEL = {
   pothole: "Pothole",
+  garbage_dump: "Garbage Dump",
   garbage: "Garbage Dump",
+  electrical_hazard: "Electrical Hazard",
   broken_streetlight: "Broken Streetlight",
   waterlogging: "Waterlogging",
+  blocked_drain: "Blocked Drain",
+  clean_street: "Clean Street",
   other: "Other Issue",
   unclassified: "Unclassified",
 };
 
 const CAT_ICON = {
   pothole: "pothole",
+  garbage_dump: "delete",
   garbage: "delete",
+  electrical_hazard: "bolt",
   broken_streetlight: "lightbulb",
   waterlogging: "water_drop",
+  blocked_drain: "plumbing",
+  clean_street: "park",
   other: "warning",
   unclassified: "help",
 };
@@ -574,10 +582,12 @@ function AdminDashboard() {
                   >
                     <option value="">All Categories</option>
                     <option value="pothole">Pothole</option>
-                    <option value="garbage">Garbage</option>
-                    <option value="broken_streetlight">Streetlight</option>
+                    <option value="garbage_dump">Garbage Dump</option>
+                    <option value="electrical_hazard">Electrical Hazard</option>
                     <option value="waterlogging">Waterlogging</option>
-                    <option value="other">Other</option>
+                    <option value="blocked_drain">Blocked Drain</option>
+                    <option value="clean_street">Clean Street</option>
+                    <option value="unclassified">Unclassified</option>
                   </FilterSelect>
                   <FilterSelect
                     value={filters.sort}
@@ -626,8 +636,10 @@ function AdminDashboard() {
                       <tr>
                         <th className="px-6 py-4">Issue ID</th>
                         <th className="px-6 py-4">Title & Location</th>
+                        <th className="px-6 py-4">Category</th>
                         <th className="px-6 py-4">Severity</th>
                         <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Reported</th>
                         <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -656,6 +668,11 @@ function AdminDashboard() {
                             </p>
                           </td>
                           <td className="px-6 py-4">
+                            <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                              {CAT_LABEL[t.aiCategory] ?? "Unknown"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
                             <SeverityDot score={t.severityScore} />
                           </td>
                           <td className="px-6 py-4">
@@ -666,6 +683,12 @@ function AdminDashboard() {
                                 .replace("_", " ")
                                 .replace(/\b\w/g, (c) => c.toUpperCase())}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-xs text-slate-500">
+                              <div className="font-medium">{t.createdAt ? new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}</div>
+                              <div className="text-[10px] text-slate-400">{t.createdAt ? new Date(t.createdAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}</div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button className="p-2 hover:bg-slate-200 rounded-lg transition-colors">

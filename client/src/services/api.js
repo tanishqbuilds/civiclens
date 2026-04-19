@@ -60,8 +60,18 @@ export const getTicketById = (id) => API.get(`/tickets/${id}`);
 /**
  * Update ticket status
  */
-export const updateTicketStatus = (id, status) =>
-    API.patch(`/tickets/${id}`, { status });
+export const updateTicketStatus = (id, status) => {
+    // Send whichever token is available: user_token (officer) or admin_token (via interceptor)
+    const headers = {};
+    const userToken = localStorage.getItem('user_token');
+    const adminToken = localStorage.getItem('admin_token');
+    if (userToken) {
+        headers.Authorization = `Bearer ${userToken}`;
+    } else if (adminToken) {
+        headers.Authorization = `Bearer ${adminToken}`;
+    }
+    return API.patch(`/tickets/${id}`, { status }, { headers });
+};
 
 /**
  * Get dashboard aggregate stats

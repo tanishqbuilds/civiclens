@@ -60,4 +60,29 @@ function optionalUserToken(req, res, next) {
     next();
 }
 
-module.exports = { verifyToken, verifyUserToken, optionalUserToken };
+/**
+ * Verify ANY valid JWT token — works for both admin and user (officer/citizen) tokens.
+ * Sets req.admin AND/OR req.user so downstream controllers can check either.
+ */
+function verifyAnyToken(req, res, next) {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'No token provided' });
+    }
+
+    const token = header.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // If the token has a 'role' field, it's a user token (citizen/officer)
+        if (decoded.role) {
+            req.user = decoded;
+        } else {
+            req.admin = decoded;
+        }
+        next();
+    } catch {
+        return res.status(401).json({ success: false, error: 'Invalid or expired token.' });
+    }
+}
+
+module.exports = { verifyToken, verifyUserToken, optionalUserToken, verifyAnyToken };
